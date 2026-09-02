@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: gd-progress-tracker
+
+  datasource:
+    url: jdbc:h2:file:./data/gdtracker;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8085
+
+sync:
+  aredl:
+    api-key: ${AREDL_API_KEY:}
+  gddl:
+    api-key: ${GDDL_API_KEY:}
+  cron: "0 0 4 * * *"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/gdtracker?createDatabaseIfNotExist=true&serverTimezone=UTC}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect

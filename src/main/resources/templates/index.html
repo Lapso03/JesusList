@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>GD Progress Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="home-hero">
+    <h1>GD Progress Tracker</h1>
+    <p class="muted">El progreso de GdLali, Bimba666 y Lapso en las listas Classic y Platformer.</p>
+
+    <div class="home-grid">
+        <a th:href="@{/listas/classic}" class="nav-card">
+            <span class="nav-emoji">😈</span>
+            <span class="nav-title">Classic</span>
+            <span class="nav-desc">89 niveles Demon, ranking y progreso</span>
+        </a>
+
+        <a th:href="@{/listas/platformer}" class="nav-card">
+            <span class="nav-emoji">🕹️</span>
+            <span class="nav-title">Platformer</span>
+            <span class="nav-desc">24 niveles, completado / no completado</span>
+        </a>
+
+        <a th:href="@{/enlaces}" class="nav-card">
+            <span class="nav-emoji">🔗</span>
+            <span class="nav-title">Enlaces</span>
+            <span class="nav-desc">AREDL, GDDL y demás sitios útiles</span>
+        </a>
+
+        <a th:href="@{/login}" class="nav-card nav-card-accent">
+            <span class="nav-emoji">🔑</span>
+            <span class="nav-title">Iniciar sesión</span>
+            <span class="nav-desc">Para poder editar tu progreso</span>
+        </a>
+    </div>
+</main>
+
+</body>
+</html>

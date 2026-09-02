@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin · GD Progress Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="admin-page">
+  <h1>Administrar niveles</h1>
+
+  <nav class="tabs">
+    <a href="#" data-tipo="classic" class="tab-link">Classic</a>
+    <a href="#" data-tipo="platformer" class="tab-link">Platformer</a>
+    <button id="sync-all-btn" class="guest-link difficulty-field" type="button">🔄 Sincronizar todo con AREDL/GDDL</button>
+  </nav>
+
+  <section class="admin-add">
+    <h2>Añadir nivel</h2>
+    <form id="add-form" class="admin-form">
+      <label>
+        Posición
+        <input type="number" name="position" min="1" required>
+      </label>
+      <label class="grow">
+        Nombre
+        <input type="text" name="name" required>
+      </label>
+      <label>
+        ID de GD
+        <input type="number" name="gdId" placeholder="opcional">
+      </label>
+      <label class="grow difficulty-field">
+        Dificultad
+        <input type="text" name="staticDifficulty" placeholder="Extreme Demon (Tier 25)">
+      </label>
+      <label class="grow">
+        Vídeo (YouTube, opcional)
+        <input type="text" name="showcaseVideoUrl" placeholder="https://youtube.com/watch?v=...">
+      </label>
+
+      <button type="submit">Añadir</button>
+    </form>
+    <p class="muted difficulty-field">
+      Si pones el ID de GD, en cuanto guardes se intentará rellenar sola la dificultad/posición AREDL-GDDL.
+    </p>
+  </section>
+
+  <table>
+    <thead>
+    <tr>
+      <th>#</th>
+      <th>Nombre</th>
+      <th class="difficulty-col">Dificultad</th>
+      <th>ID de GD</th>
+      <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody id="levels-tbody">
+    <tr><td colspan="5" class="muted">Cargando…</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<script th:inline="javascript">
+  (function () {
+    const initialType = /*[[${listType}]]*/ 'classic';
+    let currentType = initialType;
+    let levels = [];
+    let editingId = null;
+
+    const tbody = document.getElementById('levels-tbody');
+    const addForm = document.getElementById('add-form');
+    const tabLinks = document.querySelectorAll('.tab-link');
+    const difficultyFields = document.querySelectorAll('.difficulty-field');
+    const difficultyCol = document.querySelector('.difficulty-col');
+    const syncAllBtn = document.getElementById('sync-all-btn');
+
+    function apiUrl(path) {
+      return '/admin/api/niveles' + path;
+    }
+
+    function setType(tipo) {
+      currentType = tipo;
+      editingId = null;
+      tabLinks.forEach(a => a.classList.toggle('active', a.dataset.tipo === tipo));
+      const isClassic = tipo === 'classic';
+      difficultyFields.forEach(el => el.style.display = isClassic ? '' : 'none');
+      if (difficultyCol) difficultyCol.style.display = isClassic ? '' : 'none';
+      load();
+    }
+
+    async function load() {
+      tbody.innerHTML = '<tr><td colspan="5" class="muted">Cargando…</td></tr>';
+      const res = await fetch(apiUrl('?tipo=' + currentType));
+      if (res.status === 403) {
+        window.location.href = '/login';
+        return;
+      }
+      levels = await res.json();
+      render();
+    }
+
+    function render() {
+      const isClassic = currentType === 'classic';
+      tbody.innerHTML = '';
+
+      if (levels.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="muted">Sin niveles todavía.</td></tr>';
+        return;
+      }
+
+      for (const level of levels) {
+        const tr = document.createElement('tr');
+
+        if (editingId === level.id) {
+          tr.innerHTML = `
+                    <td><input type="number" min="1" class="pos-input" value="${level.position}"></td>
+                    <td>
+                        <input type="text" value="${escapeAttr(level.name)}" class="name-input">
+                        <input type="text" value="${escapeAttr(level.showcaseVideoUrl || '')}" class="video-input" placeholder="URL de YouTube">
+                    </td>
+                    ${isClassic ? `<td><input type="text" value="${escapeAttr(level.gddlDifficulty || level.staticDifficulty || '')}" class="diff-input"></td>` : ''}
+                    <td><input type="number" value="${level.gdId ?? ''}" class="gdid-input"></td>
+                    <td class="admin-actions">
+                        <button class="save-btn" title="Guardar">💾</button>
+                        <button class="cancel-btn" title="Cancelar">✖️</button>
+                    </td>
+                `;
+          tr.querySelector('.save-btn').addEventListener('click', () => saveEdit(level.id));
+          tr.querySelector('.cancel-btn').addEventListener('click', () => { editingId = null; render(); });
+        } else {
+          tr.innerHTML = `
+                    <td>${level.position}</td>
+                    <td>${escapeHtml(level.name)}</td>
+                    ${isClassic ? `<td>${escapeHtml(level.gddlDifficulty || level.staticDifficulty || '—')}</td>` : ''}
+                    <td>${level.gdId ?? '—'}</td>
+                    <td class="admin-actions"></td>
+                `;
+          const actionsTd = tr.querySelector('.admin-actions');
+
+          const editBtn = document.createElement('button');
+          editBtn.textContent = '✏️';
+          editBtn.title = 'Editar';
+          editBtn.addEventListener('click', () => { editingId = level.id; render(); });
+          actionsTd.appendChild(editBtn);
+
+          if (isClassic && level.gdId) {
+            const syncBtn = document.createElement('button');
+            syncBtn.textContent = '🔄';
+            syncBtn.title = 'Resincronizar con AREDL/GDDL';
+            syncBtn.addEventListener('click', () => syncLevel(level.id));
+            actionsTd.appendChild(syncBtn);
+          }
+
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '🗑️';
+          delBtn.title = 'Borrar';
+          delBtn.className = 'danger';
+          delBtn.addEventListener('click', () => deleteLevel(level.id));
+          actionsTd.appendChild(delBtn);
+        }
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str ?? '';
+      return div.innerHTML;
+    }
+    function escapeAttr(str) {
+      return (str ?? '').replace(/"/g, '&quot;');
+    }
+
+    async function saveEdit(id) {
+      const row = [...tbody.querySelectorAll('tr')].find(tr => tr.querySelector('.save-btn'));
+      const position = parseInt(row.querySelector('.pos-input').value, 10);
+      const name = row.querySelector('.name-input').value.trim();
+      const showcaseVideoUrl = row.querySelector('.video-input').value.trim() || null;
+      const gdIdRaw = row.querySelector('.gdid-input').value;
+      const gdId = gdIdRaw ? parseInt(gdIdRaw, 10) : null;
+      const diffInput = row.querySelector('.diff-input');
+      const staticDifficulty = diffInput ? diffInput.value : null;
+
+      if (!name || !position) return;
+
+      const res = await fetch(apiUrl('/' + id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: currentType, position, name, gdId, staticDifficulty, showcaseVideoUrl })
+      });
+      if (res.status === 403) { window.location.href = '/login'; return; }
+      levels = await res.json();
+      editingId = null;
+      render();
+    }
+
+    async function syncLevel(id) {
+      const res = await fetch(apiUrl('/' + id + '/sincronizar?tipo=' + currentType), { method: 'POST' });
+      if (res.status === 403) { window.location.href = '/login'; return; }
+      levels = await res.json();
+      render();
+    }
+
+    async function deleteLevel(id) {
+      if (!confirm('¿Seguro que quieres borrar este nivel?')) return;
+      const res = await fetch(apiUrl('/' + id + '?tipo=' + currentType), { method: 'DELETE' });
+      if (res.status === 403) { window.location.href = '/login'; return; }
+      levels = await res.json();
+      render();
+    }
+
+    tabLinks.forEach(a => a.addEventListener('click', e => {
+      e.preventDefault();
+      setType(a.dataset.tipo);
+    }));
+
+    syncAllBtn.addEventListener('click', async () => {
+      syncAllBtn.textContent = '🔄 Sincronizando…';
+      const res = await fetch(apiUrl('/sincronizar-todo?tipo=' + currentType), { method: 'POST' });
+      syncAllBtn.textContent = '🔄 Sincronizar todo con AREDL/GDDL';
+      if (res.status === 403) { window.location.href = '/login'; return; }
+      levels = await res.json();
+      render();
+    });
+
+    addForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(addForm);
+      const position = parseInt(fd.get('position'), 10);
+      const name = fd.get('name').trim();
+      const gdIdRaw = fd.get('gdId');
+      const gdId = gdIdRaw ? parseInt(gdIdRaw, 10) : null;
+      const staticDifficulty = fd.get('staticDifficulty') || null;
+      const showcaseVideoUrl = fd.get('showcaseVideoUrl') || null;
+
+      if (!name || !position) return;
+
+      const res = await fetch(apiUrl(''), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: currentType, position, name, gdId, staticDifficulty, showcaseVideoUrl })
+      });
+      if (res.status === 403) { window.location.href = '/login'; return; }
+      levels = await res.json();
+      addForm.reset();
+      render();
+    });
+
+    setType(initialType);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi cuenta · GD Progress Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="login-wrap">
+    <form th:action="@{/cuenta/password}" method="post" class="login-box">
+        <h1>Mi cuenta</h1>
+        <p class="muted">Conectado como <strong th:text="${username}"></strong>. Cambia tu contraseña aquí.</p>
+
+        <p class="login-error" th:if="${error == 'actual'}">La contraseña actual no es correcta.</p>
+        <p class="login-error" th:if="${error == 'nueva'}">La nueva contraseña no coincide en ambos campos.</p>
+        <p class="login-ok" th:if="${ok}">Contraseña actualizada correctamente.</p>
+
+        <label>
+            Contraseña actual
+            <input type="password" name="currentPassword" required autofocus>
+        </label>
+        <label>
+            Nueva contraseña
+            <input type="password" name="newPassword" required>
+        </label>
+        <label>
+            Repite la nueva contraseña
+            <input type="password" name="confirmPassword" required>
+        </label>
+
+        <button type="submit">Guardar</button>
+    </form>
+</div>
+
+</body>
+</html>

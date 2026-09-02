@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Error · GD Progress Tracker</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="error-page">
+  <h1>😵 Algo ha ido mal</h1>
+  <p class="error-status">
+    <strong th:text="${status}"></strong> — <span th:text="${error}"></span>
+  </p>
+  <p class="error-message" th:text="${message}"></p>
+  <p class="muted" th:if="${path != null and path != ''}">Ruta: <code th:text="${path}"></code></p>
+  <p class="muted" th:if="${exception != null and exception != ''}">Tipo: <code th:text="${exception}"></code></p>
+
+  <a th:href="@{/}" class="guest-link">← Volver al inicio</a>
+</main>
+
+</body>
+</html>

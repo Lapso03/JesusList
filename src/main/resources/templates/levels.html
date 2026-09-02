@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>GD Progress Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <a th:href="@{/}" class="brand">GD Progress Tracker</a>
+
+    <nav class="tabs">
+        <a th:href="@{/listas/classic}" th:classappend="${listType == 'classic'} ? 'active'">Classic</a>
+        <a th:href="@{/listas/platformer}" th:classappend="${listType == 'platformer'} ? 'active'">Platformer</a>
+        <a th:href="@{/enlaces}">Enlaces</a>
+        <a th:if="${isEditor}" th:href="@{/admin/niveles(tipo=${listType})}">Admin</a>
+    </nav>
+
+    <div class="user-switch">
+        <span th:if="${currentUser != null}" class="session-user" th:text="'Sesión: ' + ${currentUser}"></span>
+        <a th:if="${currentUser != null and isEditor}" th:href="@{/cuenta}">Mi cuenta</a>
+        <a th:if="${currentUser != null}" th:href="@{/logout(volver=${listType})}">Cerrar sesión</a>
+        <a th:if="${currentUser == null}" th:href="@{/login(volver=${listType})}" class="login-link">Iniciar sesión</a>
+    </div>
+</header>
+
+<main class="layout">
+    <section class="levels">
+        <table>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Nivel</th>
+                <th>Dificultad</th>
+                <th>Puntos</th>
+                <th th:each="u : ${users}" th:text="${u.username}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${rows}">
+                <td th:text="${row.level.position}"></td>
+                <td>
+                    <a th:href="@{/niveles/{id}(id=${row.level.id})}" class="level-link" th:text="${row.level.name}"></a>
+                    <span class="sync-tag" th:if="${listType == 'classic' and row.level.aredlPosition != null}"
+                          th:text="'AREDL #' + ${row.level.aredlPosition}"></span>
+                </td>
+                <td>
+                    <span th:text="${row.level.gddlDifficulty} ?: ${row.level.staticDifficulty}"></span>
+                </td>
+                <td th:text="${#numbers.formatDecimal(row.points, 1, 1)}"></td>
+
+                <td th:each="u : ${users}"
+                    th:with="pct=${row.progressByUser.get(u.username)} ?: 0,
+                             pctClass=${pct >= 100} ? 'pct-100' : (${pct >= 90} ? 'pct-90' : (${pct >= 50} ? 'pct-50' : ''))">
+                    <form th:if="${u.username == currentUser and listType == 'classic'}"
+                          th:action="@{/progreso/actualizar}" method="post" class="progress-form">
+                        <input type="hidden" name="levelId" th:value="${row.level.id}">
+                        <input type="hidden" name="volver" th:value="${listType}">
+                        <input type="number" name="percentage" min="0" max="100"
+                               th:value="${pct}" th:class="${pctClass}"
+                               oninput="this.className = this.value >= 100 ? 'pct-100' : (this.value >= 90 ? 'pct-90' : (this.value >= 50 ? 'pct-50' : ''))"
+                               onchange="this.form.submit()">
+                        <span>%</span>
+                    </form>
+
+                    <form th:if="${u.username == currentUser and listType == 'platformer'}"
+                          th:action="@{/progreso/actualizar}" method="post" class="progress-form">
+                        <input type="hidden" name="levelId" th:value="${row.level.id}">
+                        <input type="hidden" name="volver" th:value="${listType}">
+                        <input type="hidden" name="percentage"
+                               th:value="${pct >= 100} ? 0 : 100">
+                        <button type="submit" th:class="${pctClass}"
+                                th:text="${pct >= 100} ? '✅' : '⬜'"></button>
+                    </form>
+
+                    <span th:unless="${u.username == currentUser}"
+                          th:class="'pct-badge ' + ${pctClass}"
+                          th:text="${pct} + '%'"></span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <aside class="leaderboard">
+
+        <div th:if="${externalRecommendations != null and !#lists.isEmpty(externalRecommendations)}" class="recommend-box">
+            <h2>De todo Geometry Dash</h2>
+            <ul>
+                <li th:each="rec : ${externalRecommendations}">
+                    <a th:href="'https://gdbrowser.com/' + ${rec.id}" target="_blank" rel="noopener"
+                       th:text="${rec.name} + ' · ' + ${rec.difficulty}"></a>
+                </li>
+            </ul>
+            <p class="muted external-note">Vía GDBrowser, aún no en vuestra lista.</p>
+        </div>
+
+        <div th:if="${recommendations != null and !#lists.isEmpty(recommendations)}" class="recommend-box">
+            <h2>Recomendado para ti</h2>
+            <ul>
+                <li th:each="rec : ${recommendations}">
+                    <a th:href="@{/niveles/{id}(id=${rec.id})}" th:text="'#' + ${rec.position} + ' · ' + ${rec.name}"></a>
+                </li>
+            </ul>
+        </div>
+        <h2>Ranking · <span th:text="${listType == 'classic'} ? 'Classic' : 'Platformer'"></span></h2>
+        <ol>
+            <li th:each="entry : ${leaderboard}">
+                <span th:text="${entry.username}"></span>
+                <strong th:text="${#numbers.formatDecimal(entry.points, 1, 1)}"></strong>
+                <small th:text="${entry.levelsCompleted} + ' niveles'"></small>
+            </li>
+        </ol>
+
+        <h2>Ranking global</h2>
+        <ol>
+            <li th:each="entry : ${globalLeaderboard}">
+                <span th:text="${entry.username}"></span>
+                <strong th:text="${#numbers.formatDecimal(entry.points, 1, 1)}"></strong>
+                <small th:text="${entry.levelsCompleted} + ' niveles'"></small>
+            </li>
+        </ol>
+    </aside>
+</main>
+
+</body>
+</html>
