@@ -1,16 +1,17 @@
 services:
-  mysql:
-    image: mysql:8
+  postgres:
+    image: postgres:16
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: gdtracker
+      POSTGRES_DB: gdtracker
+      POSTGRES_USER: gdtracker
+      POSTGRES_PASSWORD: gdtracker
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - gdtracker-mysql-data:/var/lib/mysql
+      - gdtracker-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "pg_isready", "-U", "gdtracker"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -19,17 +20,17 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     ports:
       - "8085:8085"
     environment:
-      SPRING_PROFILES_ACTIVE: mysql
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gdtracker?createDatabaseIfNotExist=true&serverTimezone=UTC
-      DB_USERNAME: root
-      DB_PASSWORD: root
+      SPRING_PROFILES_ACTIVE: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gdtracker
+      DB_USERNAME: gdtracker
+      DB_PASSWORD: gdtracker
       AREDL_API_KEY: ${AREDL_API_KEY}
       GDDL_API_KEY: ${GDDL_API_KEY}
 
 volumes:
-  gdtracker-mysql-data:
+  gdtracker-postgres-data:

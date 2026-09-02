@@ -46,10 +46,10 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- MySQL, para cuando quieras desplegar como en EventApp -->
+        <!-- PostgreSQL -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
