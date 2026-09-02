@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${level.name} + ' · GD Progress Tracker'"></title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="level-detail-page">
+  <a th:href="@{/listas/{tipo}(tipo=${level.listType.name().toLowerCase()})}" class="back-link">← Volver a la lista</a>
+
+  <h1 th:text="${level.name}"></h1>
+  <p class="muted">
+    #<span th:text="${level.position}"></span> ·
+    <span th:text="${level.gddlDifficulty} ?: (${level.staticDifficulty} ?: 'Sin dificultad')"></span>
+    <span th:if="${level.aredlPosition != null}"> · AREDL #<span th:text="${level.aredlPosition}"></span></span>
+  </p>
+
+  <div class="video-wrap">
+    <iframe th:if="${embedUrl != null}"
+            th:src="${embedUrl}"
+            frameborder="0" allowfullscreen></iframe>
+    <div th:unless="${embedUrl != null}" class="video-fallback">
+      <p>Todavía no hay vídeo guardado para este nivel.</p>
+      <a th:href="${youtubeSearchUrl}" target="_blank" rel="noopener" class="guest-link">🔎 Buscar showcase en YouTube</a>
+    </div>
+  </div>
+
+  <section class="comments">
+    <h2>Comentarios</h2>
+
+    <div th:if="${#lists.isEmpty(comments)}" class="muted">Todavía no hay comentarios.</div>
+
+    <div class="comment" th:each="c : ${comments}">
+      <strong th:text="${c.user.username}"></strong>
+      <span class="comment-date" th:text="${#temporals.format(c.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+      <p th:text="${c.text}"></p>
+    </div>
+
+    <form th:if="${isEditor}" th:action="@{/niveles/{id}/comentarios(id=${level.id})}" method="post" class="comment-form">
+      <textarea name="text" placeholder="Escribe un comentario..." required></textarea>
+      <button type="submit">Comentar</button>
+    </form>
+    <p th:unless="${isEditor}" class="muted">
+      <a th:href="@{/login}">Inicia sesión</a> para poder comentar.
+    </p>
+  </section>
+</main>
+
+</body>
+</html>

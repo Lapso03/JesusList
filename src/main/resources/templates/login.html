@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar sesión · GD Progress Tracker</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="login-wrap">
+    <form th:action="@{/login}" method="post" class="login-box">
+        <h1>Iniciar sesión</h1>
+        <p class="muted">¿Primera vez? Escribe la contraseña que quieras usar a partir de ahora, se guardará como la tuya. Si ya tienes una, escríbela para entrar.</p>
+
+        <p class="login-error" th:if="${error}">Usuario o contraseña incorrectos.</p>
+
+        <label>
+            Usuario
+            <select name="username" required>
+                <option th:each="u : ${users}" th:value="${u.username}" th:text="${u.username}"></option>
+            </select>
+        </label>
+
+        <label>
+            Contraseña
+            <input type="password" name="password" required autofocus>
+        </label>
+
+        <input type="hidden" name="volver" th:value="${volver}">
+
+        <button type="submit">Entrar</button>
+    </form>
+
+    <div class="guest-box">
+        <p class="muted">¿Solo quieres ver la lista sin editar nada?</p>
+        <a th:href="@{/login/visitante(volver=${volver})}" class="guest-link">Entrar como Visitante</a>
+    </div>
+</div>
+
+</body>
+</html>

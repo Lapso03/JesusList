@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header th:fragment="header" class="topbar">
+    <a th:href="@{/}" class="brand">GD Progress Tracker</a>
+    <nav class="tabs">
+        <a th:href="@{/listas/classic}">Classic</a>
+        <a th:href="@{/listas/platformer}">Platformer</a>
+        <a th:href="@{/enlaces}">Enlaces</a>
+        <a th:if="${isEditor}" th:href="@{/admin/niveles(tipo='classic')}">Admin</a>
+    </nav>
+    <div class="user-switch" style="margin-left:auto">
+        <span th:if="${currentUser != null}" class="session-user" th:text="${currentUser}"></span>
+        <a th:if="${currentUser != null and isEditor}" th:href="@{/cuenta}">Mi cuenta</a>
+        <a th:if="${currentUser != null}" th:href="@{/logout}">Salir</a>
+        <a th:if="${currentUser == null}" th:href="@{/login}" class="login-link">Iniciar sesión</a>
+    </div>
+</header>
+</body>
+</html>
