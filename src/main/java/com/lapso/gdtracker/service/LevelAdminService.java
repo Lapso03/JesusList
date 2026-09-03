@@ -5,6 +5,7 @@ import com.lapso.gdtracker.model.Level;
 import com.lapso.gdtracker.model.ListType;
 import com.lapso.gdtracker.model.Progress;
 import com.lapso.gdtracker.repository.AppUserRepository;
+import com.lapso.gdtracker.repository.LevelCommentRepository;
 import com.lapso.gdtracker.repository.LevelRepository;
 import com.lapso.gdtracker.repository.ProgressRepository;
 import com.lapso.gdtracker.service.sync.AredlClient;
@@ -23,14 +24,16 @@ public class LevelAdminService {
     private final ProgressRepository progressRepository;
     private final AredlClient aredlClient;
     private final GddlClient gddlClient;
+    private final LevelCommentRepository levelCommentRepository;
 
     public LevelAdminService(LevelRepository levelRepository, AppUserRepository userRepository,
-                             ProgressRepository progressRepository, AredlClient aredlClient, GddlClient gddlClient) {
+                             ProgressRepository progressRepository, AredlClient aredlClient, GddlClient gddlClient, LevelCommentRepository levelCommentRepository) {
         this.levelRepository = levelRepository;
         this.userRepository = userRepository;
         this.progressRepository = progressRepository;
         this.aredlClient = aredlClient;
         this.gddlClient = gddlClient;
+        this.levelCommentRepository = levelCommentRepository;
     }
 
     @Transactional
@@ -99,6 +102,8 @@ public class LevelAdminService {
         ListType listType = level.getListType();
         int position = level.getPosition();
 
+        levelCommentRepository.deleteAll(levelCommentRepository.findByLevelOrderByCreatedAtAsc(level));
+        progressRepository.deleteAll(progressRepository.findByLevel(level));
         levelRepository.delete(level);
         levelRepository.flush();
 

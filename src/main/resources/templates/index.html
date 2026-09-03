@@ -17,13 +17,13 @@
         <a th:href="@{/listas/classic}" class="nav-card">
             <span class="nav-emoji">😈</span>
             <span class="nav-title">Classic</span>
-            <span class="nav-desc">89 niveles Demon, ranking y progreso</span>
+            <span class="nav-desc" th:text="${classicCount} + ' niveles Demon, ranking y progreso'"></span>
         </a>
 
         <a th:href="@{/listas/platformer}" class="nav-card">
             <span class="nav-emoji">🕹️</span>
             <span class="nav-title">Platformer</span>
-            <span class="nav-desc">24 niveles, completado / no completado</span>
+            <span class="nav-desc" th:text="${platformerCount} + ' niveles, completado / no completado'"></span>
         </a>
 
         <a th:href="@{/enlaces}" class="nav-card">

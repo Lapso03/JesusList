@@ -44,6 +44,7 @@ public class GddlClient {
             int tier = (int) Math.round(body.get("Rating").asDouble());
             return difficulty + " (Tier " + tier + ")";
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }

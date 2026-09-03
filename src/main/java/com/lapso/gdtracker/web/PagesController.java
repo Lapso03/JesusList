@@ -1,5 +1,7 @@
 package com.lapso.gdtracker.web;
 
+import com.lapso.gdtracker.model.ListType;
+import com.lapso.gdtracker.repository.LevelRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +10,11 @@ import java.util.List;
 
 @Controller
 public class PagesController {
+
+    LevelRepository levelRepository;
+    public PagesController (LevelRepository levelRepository){
+        this.levelRepository = levelRepository;
+    }
 
     /**
      * Edita esta lista para añadir/quitar los enlaces que se muestran en /enlaces.
@@ -24,7 +31,11 @@ public class PagesController {
     );
 
     @GetMapping("/")
-    public String home() {
+    public String home(Model model) {
+
+        // Para futuras listas añadir aquí atributos para contar el número de niveles
+        model.addAttribute("classicCount", levelRepository.countByListType(ListType.CLASSIC));
+        model.addAttribute("platformerCount", levelRepository.countByListType(ListType.PLATFORMER));
         return "index";
     }
 
