@@ -13,4 +13,5 @@ public interface ProgressRepository extends JpaRepository<Progress, Long> {
     Optional<Progress> findByLevelAndUser(Level level, AppUser user);
     List<Progress> findByUser(AppUser user);
     List<Progress> findByLevelIn(List<Level> levels);
+    List<Progress> findByLevel(Level level);
 }
