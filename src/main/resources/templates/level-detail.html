@@ -10,7 +10,7 @@
 <header th:replace="~{fragments/header :: header}"></header>
 
 <main class="level-detail-page">
-  <a th:href="@{/listas/{tipo}(tipo=${level.listType.name().toLowerCase()})}" class="back-link">← Volver a la lista</a>
+  <a th:href="@{/listas/{tipo}(tipo=${level.gameList.slug})}" class="back-link">← Volver a la lista</a>
 
   <h1 th:text="${level.name}"></h1>
   <p class="muted">

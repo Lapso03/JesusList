@@ -1,6 +1,7 @@
 package com.lapso.gdtracker.web;
 
-import com.lapso.gdtracker.model.ListType;
+import com.lapso.gdtracker.model.GameList;
+import com.lapso.gdtracker.repository.GameListRepository;
 import com.lapso.gdtracker.repository.LevelRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,10 +12,8 @@ import java.util.List;
 @Controller
 public class PagesController {
 
-    LevelRepository levelRepository;
-    public PagesController (LevelRepository levelRepository){
-        this.levelRepository = levelRepository;
-    }
+    private final GameListRepository gameListRepository;
+    private final LevelRepository levelRepository;
 
     /**
      * Edita esta lista para añadir/quitar los enlaces que se muestran en /enlaces.
@@ -30,12 +29,17 @@ public class PagesController {
             new LinkItem("GDBrowser", "Perfiles y niveles de GD", "https://gdbrowser.com", "🔍")
     );
 
+    public PagesController(GameListRepository gameListRepository, LevelRepository levelRepository) {
+        this.gameListRepository = gameListRepository;
+        this.levelRepository = levelRepository;
+    }
+
     @GetMapping("/")
     public String home(Model model) {
-
-        // Para futuras listas añadir aquí atributos para contar el número de niveles
-        model.addAttribute("classicCount", levelRepository.countByListType(ListType.CLASSIC));
-        model.addAttribute("platformerCount", levelRepository.countByListType(ListType.PLATFORMER));
+        List<GameListSummary> summaries = gameListRepository.findAllByOrderByDisplayOrderAsc().stream()
+                .map(gl -> new GameListSummary(gl, levelRepository.countByGameList(gl)))
+                .toList();
+        model.addAttribute("gameLists", summaries);
         return "index";
     }
 
@@ -43,5 +47,8 @@ public class PagesController {
     public String links(Model model) {
         model.addAttribute("links", LINKS);
         return "links";
+    }
+
+    public record GameListSummary(GameList list, int levelCount) {
     }
 }

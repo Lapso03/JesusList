@@ -1,8 +1,8 @@
 package com.lapso.gdtracker.service;
 
 import com.lapso.gdtracker.model.AppUser;
+import com.lapso.gdtracker.model.GameList;
 import com.lapso.gdtracker.model.Level;
-import com.lapso.gdtracker.model.ListType;
 import com.lapso.gdtracker.model.Progress;
 import com.lapso.gdtracker.repository.LevelRepository;
 import com.lapso.gdtracker.repository.ProgressRepository;
@@ -31,8 +31,8 @@ public class RecommendationService {
         this.gdBrowserClient = gdBrowserClient;
     }
 
-    public List<Level> recommendFor(AppUser user, ListType listType) {
-        List<Level> levels = levelRepository.findByListTypeOrderByPositionAsc(listType);
+    public List<Level> recommendFor(AppUser user, GameList gameList) {
+        List<Level> levels = levelRepository.findByGameListOrderByPositionAsc(gameList);
 
         Set<Long> levelIds = levels.stream().map(Level::getId).collect(Collectors.toSet());
         List<Progress> progress = progressRepository.findByUser(user).stream()
@@ -70,10 +70,15 @@ public class RecommendationService {
                 .toList();
     }
 
-    public List<GdLevelSuggestion> recommendExternalDemons(AppUser user) {
-        List<Level> classicLevels = levelRepository.findByListTypeOrderByPositionAsc(ListType.CLASSIC);
+    /**
+     * Solo tiene sentido para listas con dificultad (gdId + staticDifficulty/gddlDifficulty).
+     * Antes estaba fijado a Classic; ahora funciona para cualquier lista con hasDifficulty=true.
+     * El caller (LevelsController) debe comprobar gameList.isHasDifficulty() antes de llamar a esto.
+     */
+    public List<GdLevelSuggestion> recommendExternalDemons(AppUser user, GameList gameList) {
+        List<Level> levels = levelRepository.findByGameListOrderByPositionAsc(gameList);
 
-        Set<Long> levelIds = classicLevels.stream().map(Level::getId).collect(Collectors.toSet());
+        Set<Long> levelIds = levels.stream().map(Level::getId).collect(Collectors.toSet());
         List<Progress> progress = progressRepository.findByUser(user).stream()
                 .filter(p -> levelIds.contains(p.getLevel().getId()))
                 .toList();
@@ -83,7 +88,7 @@ public class RecommendationService {
                 .map(p -> p.getLevel().getId())
                 .collect(Collectors.toSet());
 
-        List<Level> completedLevels = classicLevels.stream()
+        List<Level> completedLevels = levels.stream()
                 .filter(l -> completedIds.contains(l.getId()))
                 .toList();
 
@@ -99,7 +104,7 @@ public class RecommendationService {
 
         int demonFilter = demonFilterFor(closest.getGddlDifficulty() != null ? closest.getGddlDifficulty() : closest.getStaticDifficulty());
 
-        Set<Long> knownGdIds = classicLevels.stream()
+        Set<Long> knownGdIds = levels.stream()
                 .map(Level::getGdId)
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());

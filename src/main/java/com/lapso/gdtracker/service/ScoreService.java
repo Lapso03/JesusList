@@ -2,7 +2,7 @@ package com.lapso.gdtracker.service;
 
 import com.lapso.gdtracker.model.AppUser;
 import com.lapso.gdtracker.model.Level;
-import com.lapso.gdtracker.model.ListType;
+import com.lapso.gdtracker.model.GameList;
 import com.lapso.gdtracker.model.Progress;
 import com.lapso.gdtracker.repository.AppUserRepository;
 import com.lapso.gdtracker.repository.LevelRepository;
@@ -37,8 +37,8 @@ public class ScoreService {
                 .toList();
     }
 
-    public List<ScoreEntry> leaderboardFor(ListType listType) {
-        List<Level> levels = levelRepository.findByListTypeOrderByPositionAsc(listType);
+    public List<ScoreEntry> leaderboardFor(GameList gameList) {
+        List<Level> levels = levelRepository.findByGameListOrderByPositionAsc(gameList);
         List<AppUser> users = userRepository.findAll();
 
         return users.stream()

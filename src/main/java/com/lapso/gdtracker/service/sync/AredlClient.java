@@ -39,7 +39,6 @@ public class AredlClient {
             return body.get("position").asInt();
         } catch (Exception e) {
             // Nivel no encontrado, fuera de lista, o API caida: no rompemos el sync por un nivel.
-            e.printStackTrace();
             return null;
         }
     }

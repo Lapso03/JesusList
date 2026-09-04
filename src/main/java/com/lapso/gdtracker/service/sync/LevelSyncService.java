@@ -1,7 +1,8 @@
 package com.lapso.gdtracker.service.sync;
 
+import com.lapso.gdtracker.model.GameList;
 import com.lapso.gdtracker.model.Level;
-import com.lapso.gdtracker.model.ListType;
+import com.lapso.gdtracker.repository.GameListRepository;
 import com.lapso.gdtracker.repository.LevelRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -13,19 +14,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Sincroniza la posicion AREDL y la dificultad GDDL de cada nivel de Classic, igual que hacia
- * el script de Google Sheets pero de forma automatica: una vez al arrancar la app (para que los
- * niveles importados del Excel se rellenen tambien) y luego cada 24h via cron.
+ * Sincroniza la posicion AREDL y la dificultad GDDL de cada nivel con ID de GD, en cualquier
+ * lista que tenga hasDifficulty=true (antes esto estaba fijado solo a Classic). Se ejecuta una
+ * vez al arrancar la app y luego cada 24h via cron.
  */
 @Service
 public class LevelSyncService {
 
     private final LevelRepository levelRepository;
+    private final GameListRepository gameListRepository;
     private final AredlClient aredlClient;
     private final GddlClient gddlClient;
 
-    public LevelSyncService(LevelRepository levelRepository, AredlClient aredlClient, GddlClient gddlClient) {
+    public LevelSyncService(LevelRepository levelRepository, GameListRepository gameListRepository,
+                            AredlClient aredlClient, GddlClient gddlClient) {
         this.levelRepository = levelRepository;
+        this.gameListRepository = gameListRepository;
         this.aredlClient = aredlClient;
         this.gddlClient = gddlClient;
     }
@@ -38,13 +42,22 @@ public class LevelSyncService {
     @Async
     @EventListener(ApplicationReadyEvent.class)
     public void onStartup() {
-        syncClassicLevels();
+        syncAll();
     }
 
-    /** Sincronizacion periodica, cada 24h (ver application.yml para el cron). */
+    /** Sincronizacion periodica, cada 24h (ver application.yml para el cron). Recorre todas las listas con dificultad. */
     @Scheduled(cron = "${sync.cron:0 0 4 * * *}")
-    public void syncClassicLevels() {
-        List<Level> levels = levelRepository.findByListTypeOrderByPositionAsc(ListType.CLASSIC);
+    public void syncAll() {
+        for (GameList gameList : gameListRepository.findAllByHasDifficultyTrue()) {
+            syncList(gameList);
+        }
+    }
+
+    /** Sincroniza una lista concreta (usado también por el botón "Sincronizar todo" del admin). */
+    public void syncList(GameList gameList) {
+        if (!gameList.isHasDifficulty()) return;
+
+        List<Level> levels = levelRepository.findByGameListOrderByPositionAsc(gameList);
         for (Level level : levels) {
             if (level.getGdId() == null) continue;
 

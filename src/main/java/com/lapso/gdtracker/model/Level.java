@@ -4,16 +4,21 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "levels", uniqueConstraints = @UniqueConstraint(columnNames = {"list_type", "position"}))
+@Table(name = "levels", uniqueConstraints = @UniqueConstraint(columnNames = {"game_list_id", "position"}))
 public class Level {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "list_type", nullable = false)
-    private ListType listType;
+    /**
+     * game_list_id se deja SIN "nullable = false" a nivel de columna a propósito: así Hibernate
+     * puede añadir la columna con ddl-auto=update sobre una tabla ya poblada (despliegue existente)
+     * sin que falle el ALTER TABLE. La migración (GameListMigrationRunner) la rellena al arrancar.
+     */
+    @ManyToOne
+    @JoinColumn(name = "game_list_id", nullable = true)
+    private GameList gameList;
 
     /** Posicion en la lista (1 = mas dificil). Determina los puntos del nivel. */
     @Column(nullable = false)
@@ -48,8 +53,8 @@ public class Level {
     protected Level() {
     }
 
-    public Level(ListType listType, int position, String name, Long gdId, String staticDifficulty, String showcaseVideoUrl) {
-        this.listType = listType;
+    public Level(GameList gameList, int position, String name, Long gdId, String staticDifficulty, String showcaseVideoUrl) {
+        this.gameList = gameList;
         this.position = position;
         this.name = name;
         this.gdId = gdId;
@@ -66,8 +71,12 @@ public class Level {
         return id;
     }
 
-    public ListType getListType() {
-        return listType;
+    public GameList getGameList() {
+        return gameList;
+    }
+
+    public void setGameList(GameList gameList) {
+        this.gameList = gameList;
     }
 
     public int getPosition() {

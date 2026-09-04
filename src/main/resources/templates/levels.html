@@ -7,23 +7,7 @@
 </head>
 <body>
 
-<header class="topbar">
-    <a th:href="@{/}" class="brand">GD Progress Tracker</a>
-
-    <nav class="tabs">
-        <a th:href="@{/listas/classic}" th:classappend="${listType == 'classic'} ? 'active'">Classic</a>
-        <a th:href="@{/listas/platformer}" th:classappend="${listType == 'platformer'} ? 'active'">Platformer</a>
-        <a th:href="@{/enlaces}">Enlaces</a>
-        <a th:if="${isEditor}" th:href="@{/admin/niveles(tipo=${listType})}">Admin</a>
-    </nav>
-
-    <div class="user-switch">
-        <span th:if="${currentUser != null}" class="session-user" th:text="'Sesión: ' + ${currentUser}"></span>
-        <a th:if="${currentUser != null and isEditor}" th:href="@{/cuenta}">Mi cuenta</a>
-        <a th:if="${currentUser != null}" th:href="@{/logout(volver=${listType})}">Cerrar sesión</a>
-        <a th:if="${currentUser == null}" th:href="@{/login(volver=${listType})}" class="login-link">Iniciar sesión</a>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <main class="layout">
     <section class="levels">
@@ -42,7 +26,7 @@
                 <td th:text="${row.level.position}"></td>
                 <td>
                     <a th:href="@{/niveles/{id}(id=${row.level.id})}" class="level-link" th:text="${row.level.name}"></a>
-                    <span class="sync-tag" th:if="${listType == 'classic' and row.level.aredlPosition != null}"
+                    <span class="sync-tag" th:if="${gameList.hasDifficulty and row.level.aredlPosition != null}"
                           th:text="'AREDL #' + ${row.level.aredlPosition}"></span>
                 </td>
                 <td>
@@ -53,7 +37,7 @@
                 <td th:each="u : ${users}"
                     th:with="pct=${row.progressByUser.get(u.username)} ?: 0,
                              pctClass=${pct >= 100} ? 'pct-100' : (${pct >= 90} ? 'pct-90' : (${pct >= 50} ? 'pct-50' : ''))">
-                    <form th:if="${u.username == currentUser and listType == 'classic'}"
+                    <form th:if="${u.username == currentUser and gameList.hasDifficulty}"
                           th:action="@{/progreso/actualizar}" method="post" class="progress-form">
                         <input type="hidden" name="levelId" th:value="${row.level.id}">
                         <input type="hidden" name="volver" th:value="${listType}">
@@ -64,7 +48,7 @@
                         <span>%</span>
                     </form>
 
-                    <form th:if="${u.username == currentUser and listType == 'platformer'}"
+                    <form th:if="${u.username == currentUser and !gameList.hasDifficulty}"
                           th:action="@{/progreso/actualizar}" method="post" class="progress-form">
                         <input type="hidden" name="levelId" th:value="${row.level.id}">
                         <input type="hidden" name="volver" th:value="${listType}">
@@ -104,7 +88,7 @@
                 </li>
             </ul>
         </div>
-        <h2>Ranking · <span th:text="${listType == 'classic'} ? 'Classic' : 'Platformer'"></span></h2>
+        <h2>Ranking · <span th:text="${gameList.name}"></span></h2>
         <ol>
             <li th:each="entry : ${leaderboard}">
                 <span th:text="${entry.username}"></span>
