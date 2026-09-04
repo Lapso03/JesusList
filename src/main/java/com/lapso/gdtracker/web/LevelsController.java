@@ -1,19 +1,22 @@
 package com.lapso.gdtracker.web;
 
 import com.lapso.gdtracker.model.AppUser;
+import com.lapso.gdtracker.model.GameList;
 import com.lapso.gdtracker.model.Level;
-import com.lapso.gdtracker.model.ListType;
 import com.lapso.gdtracker.model.Progress;
 import com.lapso.gdtracker.repository.AppUserRepository;
+import com.lapso.gdtracker.repository.GameListRepository;
 import com.lapso.gdtracker.repository.LevelRepository;
 import com.lapso.gdtracker.repository.ProgressRepository;
 import com.lapso.gdtracker.service.RecommendationService;
 import com.lapso.gdtracker.service.ScoreService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,16 +27,19 @@ import java.util.Optional;
 public class LevelsController {
 
     private final LevelRepository levelRepository;
+    private final GameListRepository gameListRepository;
     private final AppUserRepository userRepository;
     private final ProgressRepository progressRepository;
     private final ScoreService scoreService;
     private final PasswordEncoder passwordEncoder;
     private final RecommendationService recommendationService;
 
-    public LevelsController(LevelRepository levelRepository, AppUserRepository userRepository,
-                            ProgressRepository progressRepository, ScoreService scoreService,
-                            PasswordEncoder passwordEncoder, RecommendationService recommendationService) {
+    public LevelsController(LevelRepository levelRepository, GameListRepository gameListRepository,
+                            AppUserRepository userRepository, ProgressRepository progressRepository,
+                            ScoreService scoreService, PasswordEncoder passwordEncoder,
+                            RecommendationService recommendationService) {
         this.levelRepository = levelRepository;
+        this.gameListRepository = gameListRepository;
         this.userRepository = userRepository;
         this.progressRepository = progressRepository;
         this.scoreService = scoreService;
@@ -43,7 +49,7 @@ public class LevelsController {
 
     @GetMapping("/login")
     public String loginForm(@RequestParam(required = false, defaultValue = "classic") String volver,
-                             @RequestParam(required = false) String error, Model model) {
+                            @RequestParam(required = false) String error, Model model) {
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("volver", volver);
         model.addAttribute("error", error != null);
@@ -56,8 +62,8 @@ public class LevelsController {
      */
     @PostMapping("/login")
     public String login(@RequestParam String username, @RequestParam String password,
-                         @RequestParam(required = false, defaultValue = "classic") String volver,
-                         HttpSession session) {
+                        @RequestParam(required = false, defaultValue = "classic") String volver,
+                        HttpSession session) {
         Optional<AppUser> maybeUser = userRepository.findByUsername(username);
         if (maybeUser.isEmpty() || password == null || password.isBlank()) {
             return "redirect:/login?error=1&volver=" + volver;
@@ -79,23 +85,24 @@ public class LevelsController {
     /** Entrada como Visitante: sin contraseña, sesión de solo lectura (nunca coincide con un AppUser real). */
     @GetMapping("/login/visitante")
     public String loginAsGuest(HttpSession session,
-                                @RequestParam(required = false, defaultValue = "classic") String volver) {
+                               @RequestParam(required = false, defaultValue = "classic") String volver) {
         session.setAttribute(SessionUtil.SESSION_USER_KEY, SessionUtil.GUEST_USERNAME);
         return "redirect:/listas/" + volver;
     }
 
     @GetMapping("/logout")
     public String logout(HttpSession session,
-                          @RequestParam(required = false, defaultValue = "classic") String volver) {
+                         @RequestParam(required = false, defaultValue = "classic") String volver) {
         session.removeAttribute(SessionUtil.SESSION_USER_KEY);
         return "redirect:/listas/" + volver;
     }
 
-    @GetMapping("/listas/{tipo}")
-    public String levels(@PathVariable String tipo, HttpSession session, Model model) {
-        ListType listType = "platformer".equalsIgnoreCase(tipo) ? ListType.PLATFORMER : ListType.CLASSIC;
+    @GetMapping("/listas/{slug}")
+    public String levels(@PathVariable String slug, HttpSession session, Model model) {
+        GameList gameList = gameListRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lista no encontrada"));
 
-        List<Level> levels = levelRepository.findByListTypeOrderByPositionAsc(listType);
+        List<Level> levels = levelRepository.findByGameListOrderByPositionAsc(gameList);
         List<AppUser> users = userRepository.findAll();
         List<Progress> allProgress = progressRepository.findByLevelIn(levels);
 
@@ -116,15 +123,16 @@ public class LevelsController {
         model.addAttribute("rows", rows);
         model.addAttribute("users", users);
         model.addAttribute("currentUser", currentUser);
-        model.addAttribute("listType", listType.name().toLowerCase());
-        model.addAttribute("leaderboard", scoreService.leaderboardFor(listType));
+        model.addAttribute("gameList", gameList);
+        model.addAttribute("listType", gameList.getSlug());
+        model.addAttribute("leaderboard", scoreService.leaderboardFor(gameList));
         model.addAttribute("globalLeaderboard", scoreService.globalLeaderboard());
 
         if (currentUser != null && !SessionUtil.GUEST_USERNAME.equals(currentUser)) {
             userRepository.findByUsername(currentUser).ifPresent(user -> {
-                model.addAttribute("recommendations", recommendationService.recommendFor(user, listType));
-                if (listType == ListType.CLASSIC) {
-                    model.addAttribute("externalRecommendations", recommendationService.recommendExternalDemons(user));
+                model.addAttribute("recommendations", recommendationService.recommendFor(user, gameList));
+                if (gameList.isHasDifficulty()) {
+                    model.addAttribute("externalRecommendations", recommendationService.recommendExternalDemons(user, gameList));
                 }
             });
         }
@@ -133,7 +141,7 @@ public class LevelsController {
 
     @PostMapping("/progreso/actualizar")
     public String updateProgress(@RequestParam Long levelId, @RequestParam int percentage,
-                                  @RequestParam String volver, HttpSession session) {
+                                 @RequestParam String volver, HttpSession session) {
         String username = (String) session.getAttribute(SessionUtil.SESSION_USER_KEY);
         if (username == null || SessionUtil.GUEST_USERNAME.equals(username)) {
             return "redirect:/listas/" + volver;

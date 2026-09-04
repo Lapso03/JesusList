@@ -356,6 +356,8 @@ input.pct-100, input.pct-90, input.pct-50 { border-color: currentColor; }
 }
 
 .admin-form label.grow { flex: 1; min-width: 160px; }
+.admin-form label.checkbox-field { flex-direction: row; align-items: center; gap: 6px; }
+.admin-form label.checkbox-field input { width: auto; }
 
 .admin-form input, .admin-page table input {
     background: var(--bg);

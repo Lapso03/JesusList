@@ -12,9 +12,56 @@
 <main class="admin-page">
   <h1>Administrar niveles</h1>
 
+  <section class="admin-add">
+    <h2>Gestionar listas</h2>
+    <table>
+      <thead>
+      <tr>
+        <th>Lista</th>
+        <th>Usa dificultad / sync</th>
+        <th>Acciones</th>
+      </tr>
+      </thead>
+      <tbody id="lists-tbody">
+      <tr th:each="gl : ${lists}" th:attr="data-id=${gl.id}">
+        <td th:text="${gl.emoji} + ' ' + ${gl.name}">😈 Classic</td>
+        <td th:text="${gl.hasDifficulty} ? 'Sí' : 'No'">Sí</td>
+        <td class="admin-actions">
+          <button type="button" class="list-edit-btn" title="Editar"
+                  th:attr="data-id=${gl.id},data-name=${gl.name},data-emoji=${gl.emoji},data-description=${gl.description},data-has-difficulty=${gl.hasDifficulty}">✏️</button>
+          <button type="button" class="list-delete-btn danger" title="Borrar lista y sus niveles"
+                  th:attr="data-id=${gl.id},data-name=${gl.name}">🗑️</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <form id="list-form" class="admin-form">
+      <input type="hidden" name="id" value="">
+      <label class="grow">
+        Nombre
+        <input type="text" name="name" required placeholder="p.ej. 2-Player">
+      </label>
+      <label>
+        Emoji
+        <input type="text" name="emoji" placeholder="🎮" maxlength="4">
+      </label>
+      <label class="grow">
+        Descripción
+        <input type="text" name="description" placeholder="Niveles de 2 jugadores">
+      </label>
+      <label class="checkbox-field">
+        <input type="checkbox" name="hasDifficulty">
+        Usa dificultad + ID de GD (sincroniza con AREDL/GDDL)
+      </label>
+      <button type="submit" id="list-form-submit">+ Añadir lista</button>
+      <button type="button" id="list-form-cancel" style="display:none">Cancelar edición</button>
+    </form>
+  </section>
+
   <nav class="tabs">
-    <a href="#" data-tipo="classic" class="tab-link">Classic</a>
-    <a href="#" data-tipo="platformer" class="tab-link">Platformer</a>
+    <a th:each="gl : ${lists}" href="#" class="tab-link"
+       th:attr="data-tipo=${gl.slug},data-has-difficulty=${gl.hasDifficulty}" th:text="${gl.name}"></a>
     <button id="sync-all-btn" class="guest-link difficulty-field" type="button">🔄 Sincronizar todo con AREDL/GDDL</button>
   </nav>
 
@@ -69,6 +116,7 @@
   (function () {
     const initialType = /*[[${listType}]]*/ 'classic';
     let currentType = initialType;
+    let hasDifficulty = true;
     let levels = [];
     let editingId = null;
 
@@ -83,17 +131,26 @@
       return '/admin/api/niveles' + path;
     }
 
+    function currentTabHasDifficulty(tipo) {
+      const tab = [...tabLinks].find(a => a.dataset.tipo === tipo);
+      return tab ? tab.dataset.hasDifficulty === 'true' : true;
+    }
+
     function setType(tipo) {
       currentType = tipo;
+      hasDifficulty = currentTabHasDifficulty(tipo);
       editingId = null;
       tabLinks.forEach(a => a.classList.toggle('active', a.dataset.tipo === tipo));
-      const isClassic = tipo === 'classic';
-      difficultyFields.forEach(el => el.style.display = isClassic ? '' : 'none');
-      if (difficultyCol) difficultyCol.style.display = isClassic ? '' : 'none';
+      difficultyFields.forEach(el => el.style.display = hasDifficulty ? '' : 'none');
+      if (difficultyCol) difficultyCol.style.display = hasDifficulty ? '' : 'none';
       load();
     }
 
     async function load() {
+      if (!currentType) {
+        tbody.innerHTML = '<tr><td colspan="5" class="muted">Crea una lista arriba para empezar.</td></tr>';
+        return;
+      }
       tbody.innerHTML = '<tr><td colspan="5" class="muted">Cargando…</td></tr>';
       const res = await fetch(apiUrl('?tipo=' + currentType));
       if (res.status === 403) {
@@ -105,7 +162,6 @@
     }
 
     function render() {
-      const isClassic = currentType === 'classic';
       tbody.innerHTML = '';
 
       if (levels.length === 0) {
@@ -123,7 +179,7 @@
                         <input type="text" value="${escapeAttr(level.name)}" class="name-input">
                         <input type="text" value="${escapeAttr(level.showcaseVideoUrl || '')}" class="video-input" placeholder="URL de YouTube">
                     </td>
-                    ${isClassic ? `<td><input type="text" value="${escapeAttr(level.gddlDifficulty || level.staticDifficulty || '')}" class="diff-input"></td>` : ''}
+                    ${hasDifficulty ? `<td><input type="text" value="${escapeAttr(level.gddlDifficulty || level.staticDifficulty || '')}" class="diff-input"></td>` : ''}
                     <td><input type="number" value="${level.gdId ?? ''}" class="gdid-input"></td>
                     <td class="admin-actions">
                         <button class="save-btn" title="Guardar">💾</button>
@@ -136,7 +192,7 @@
           tr.innerHTML = `
                     <td>${level.position}</td>
                     <td>${escapeHtml(level.name)}</td>
-                    ${isClassic ? `<td>${escapeHtml(level.gddlDifficulty || level.staticDifficulty || '—')}</td>` : ''}
+                    ${hasDifficulty ? `<td>${escapeHtml(level.gddlDifficulty || level.staticDifficulty || '—')}</td>` : ''}
                     <td>${level.gdId ?? '—'}</td>
                     <td class="admin-actions"></td>
                 `;
@@ -148,7 +204,7 @@
           editBtn.addEventListener('click', () => { editingId = level.id; render(); });
           actionsTd.appendChild(editBtn);
 
-          if (isClassic && level.gdId) {
+          if (hasDifficulty && level.gdId) {
             const syncBtn = document.createElement('button');
             syncBtn.textContent = '🔄';
             syncBtn.title = 'Resincronizar con AREDL/GDDL';
@@ -252,7 +308,66 @@
       render();
     });
 
-    setType(initialType);
+    // --- Gestión de listas (GameList CRUD) ---
+    const listForm = document.getElementById('list-form');
+    const listFormSubmit = document.getElementById('list-form-submit');
+    const listFormCancel = document.getElementById('list-form-cancel');
+
+    function listApiUrl(path) {
+      return '/admin/api/listas' + path;
+    }
+
+    document.querySelectorAll('.list-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        listForm.elements['id'].value = btn.dataset.id;
+        listForm.elements['name'].value = btn.dataset.name;
+        listForm.elements['emoji'].value = btn.dataset.emoji || '';
+        listForm.elements['description'].value = btn.dataset.description || '';
+        listForm.elements['hasDifficulty'].checked = btn.dataset.hasDifficulty === 'true';
+        listFormSubmit.textContent = '💾 Guardar cambios';
+        listFormCancel.style.display = '';
+        listForm.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    listFormCancel.addEventListener('click', () => {
+      listForm.reset();
+      listForm.elements['id'].value = '';
+      listFormSubmit.textContent = '+ Añadir lista';
+      listFormCancel.style.display = 'none';
+    });
+
+    document.querySelectorAll('.list-delete-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(`¿Seguro que quieres borrar la lista "${btn.dataset.name}"? Esto borra también TODOS sus niveles y el progreso asociado. No se puede deshacer.`)) return;
+        const res = await fetch(listApiUrl('/' + btn.dataset.id), { method: 'DELETE' });
+        if (res.status === 403) { window.location.href = '/login'; return; }
+        window.location.href = '/admin/niveles';
+      });
+    });
+
+    listForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(listForm);
+      const id = fd.get('id');
+      const body = JSON.stringify({
+        name: fd.get('name').trim(),
+        emoji: fd.get('emoji') || null,
+        description: fd.get('description') || null,
+        hasDifficulty: listForm.elements['hasDifficulty'].checked
+      });
+
+      const res = await fetch(id ? listApiUrl('/' + id) : listApiUrl(''), {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      if (res.status === 403) { window.location.href = '/login'; return; }
+      if (!res.ok) { alert('No se pudo guardar la lista.'); return; }
+      window.location.href = '/admin/niveles';
+    });
+
+    if (initialType) setType(initialType);
   })();
 </script>
 

@@ -4,10 +4,9 @@
 <header th:fragment="header" class="topbar">
     <a th:href="@{/}" class="brand">GD Progress Tracker</a>
     <nav class="tabs">
-        <a th:href="@{/listas/classic}">Classic</a>
-        <a th:href="@{/listas/platformer}">Platformer</a>
+        <a th:each="gl : ${navLists}" th:href="@{'/listas/' + ${gl.slug}}" th:text="${gl.name}"></a>
         <a th:href="@{/enlaces}">Enlaces</a>
-        <a th:if="${isEditor}" th:href="@{/admin/niveles(tipo='classic')}">Admin</a>
+        <a th:if="${isEditor}" th:href="@{/admin/niveles}">Admin</a>
     </nav>
     <div class="user-switch" style="margin-left:auto">
         <span th:if="${currentUser != null}" class="session-user" th:text="${currentUser}"></span>
