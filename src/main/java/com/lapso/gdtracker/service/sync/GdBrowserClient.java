@@ -31,6 +31,9 @@ public class GdBrowserClient {
                 String name = node.get("name").asText();
                 String difficulty = node.hasNonNull("difficulty") ? node.get("difficulty").asText() : null;
                 Integer stars = node.hasNonNull("stars") ? node.get("stars").asInt() : null;
+                // Integer moons = node.hasNonNull("moons") ? node.get("moons").asInt() : null;
+                //Buscar si puedo separar la búsqueda de demons clásicos y plataforma
+                //results.add(new GdLevelSuggestion(id, name, difficulty, stars, moons));
                 results.add(new GdLevelSuggestion(id, name, difficulty, stars));
             }
         } catch (Exception e) {

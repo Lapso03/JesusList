@@ -20,9 +20,11 @@ import java.util.Map;
  *  1. Crea las filas GameList "classic" y "platformer" si no existen.
  *  2. Para cada nivel con game_list_id NULL, lee su list_type antiguo (vía SQL directo, ya que
  *     el campo ya no existe en la entidad Java) y rellena game_list_id según corresponda.
+ *  3. Borra la columna list_type ya migrada, para que no siga bloqueando inserciones nuevas con
+ *     su restricción NOT NULL.
  *
- * En una base de datos nueva (o ya migrada) la tabla no tendrá columna list_type: el SELECT falla
- * y simplemente no hay nada que migrar, así que se ignora el error.
+ * En una base de datos nueva (o ya migrada) la tabla no tendrá columna list_type: los pasos que
+ * la usan fallan silenciosamente (capturados) y no hay nada que hacer.
  *
  * Debe ejecutarse ANTES que DataSeedRunner (@Order más bajo = antes).
  */
@@ -48,6 +50,16 @@ public class GameListMigrationRunner implements CommandLineRunner {
                         new GameList("platformer", "Platformer", "🕹️", "Niveles, completado / no completado", false, 1)));
 
         migrateLegacyLevels(classic, platformer);
+        dropLegacyColumn();
+    }
+
+    private void dropLegacyColumn() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE levels DROP COLUMN list_type");
+            System.out.println("[GameListMigrationRunner] Columna list_type eliminada (ya migrada a game_list_id).");
+        } catch (Exception e) {
+            // Ya no existe (se borró en un arranque anterior) o la BD es nueva y nunca la tuvo. Nada que hacer.
+        }
     }
 
     private void migrateLegacyLevels(GameList classic, GameList platformer) {
