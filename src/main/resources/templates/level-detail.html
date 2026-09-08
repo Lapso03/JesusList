@@ -15,7 +15,7 @@
   <h1 th:text="${level.name}"></h1>
   <p class="muted">
     #<span th:text="${level.position}"></span> ·
-    <span th:text="${level.gddlDifficulty} ?: (${level.staticDifficulty} ?: 'Sin dificultad')"></span>
+    <span th:text="${level.gddlDifficulty ?: (level.staticDifficulty ?: 'Sin dificultad')}"></span>
     <span th:if="${level.aredlPosition != null}"> · AREDL #<span th:text="${level.aredlPosition}"></span></span>
   </p>
 
