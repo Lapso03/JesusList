@@ -14,26 +14,36 @@ public class GdBrowserClient {
             .baseUrl("https://gdbrowser.com/api")
             .build();
 
-    /** @param demonFilter 1=Easy, 2=Medium, 3=Hard, 4=Insane, 5=Extreme */
-    public List<GdLevelSuggestion> searchDemons(int demonFilter, int count) {
+    /**
+     * @param demonFilter 1=Easy, 2=Medium, 3=Hard, 4=Insane, 5=Extreme
+     * @param wantPlatformer true = solo niveles en modo Platformer, false = solo niveles en modo Classic
+     * @param count cuantos resultados finales se quieren (ya filtrados por modo)
+     */
+    public List<GdLevelSuggestion> searchDemons(int demonFilter, boolean wantPlatformer, int count) {
         List<GdLevelSuggestion> results = new ArrayList<>();
         try {
+            // GDBrowser no deja filtrar Classic/Platformer directamente en la busqueda, asi que
+            // pedimos de sobra y filtramos nosotros por el campo "platformer" de cada nivel.
+            int fetchCount = Math.max(count * 6, 30);
+
             JsonNode body = restClient.get()
-                    .uri("/search/*?diff=-2&demonFilter={df}&type=mostliked&count={count}&page=1", demonFilter, count)
+                    .uri("/search/*?diff=-2&demonFilter={df}&type=mostliked&count={count}&page=1", demonFilter, fetchCount)
                     .retrieve()
                     .body(JsonNode.class);
 
             if (body == null || !body.isArray()) return results;
 
             for (JsonNode node : body) {
+                if (results.size() >= count) break;
                 if (!node.hasNonNull("id") || !node.hasNonNull("name")) continue;
+
+                boolean isPlatformer = node.hasNonNull("platformer") && node.get("platformer").asBoolean();
+                if (isPlatformer != wantPlatformer) continue;
+
                 Long id = node.get("id").asLong();
                 String name = node.get("name").asText();
                 String difficulty = node.hasNonNull("difficulty") ? node.get("difficulty").asText() : null;
                 Integer stars = node.hasNonNull("stars") ? node.get("stars").asInt() : null;
-                // Integer moons = node.hasNonNull("moons") ? node.get("moons").asInt() : null;
-                //Buscar si puedo separar la búsqueda de demons clásicos y plataforma
-                //results.add(new GdLevelSuggestion(id, name, difficulty, stars, moons));
                 results.add(new GdLevelSuggestion(id, name, difficulty, stars));
             }
         } catch (Exception e) {

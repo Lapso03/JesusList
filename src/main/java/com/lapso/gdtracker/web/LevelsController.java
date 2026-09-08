@@ -131,9 +131,7 @@ public class LevelsController {
         if (currentUser != null && !SessionUtil.GUEST_USERNAME.equals(currentUser)) {
             userRepository.findByUsername(currentUser).ifPresent(user -> {
                 model.addAttribute("recommendations", recommendationService.recommendFor(user, gameList));
-                if (gameList.isHasDifficulty()) {
-                    model.addAttribute("externalRecommendations", recommendationService.recommendExternalDemons(user, gameList));
-                }
+                model.addAttribute("externalRecommendations", recommendationService.recommendExternalDemons(user, gameList));
             });
         }
         return "levels";
