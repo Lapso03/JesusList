@@ -34,12 +34,12 @@
                           th:text="'AREDL #' + ${row.level.aredlPosition}"></span>
                 </td>
                 <td>
-                    <span th:text="${row.level.gddlDifficulty} ?: ${row.level.staticDifficulty}"></span>
+                    <span th:text="${row.level.gddlDifficulty ?: row.level.staticDifficulty}"></span>
                 </td>
                 <td th:text="${#numbers.formatDecimal(row.points, 1, 1)}"></td>
 
                 <td th:each="u : ${users}"
-                    th:with="pct=${row.progressByUser.get(u.username)} ?: 0,
+                    th:with="pct=${row.progressByUser.get(u.username) ?: 0},
                              pctClass=${pct >= 100} ? 'pct-100' : (${pct >= 90} ? 'pct-90' : (${pct >= 50} ? 'pct-50' : ''))">
                     <form th:if="${u.username == currentUser and gameList.hasDifficulty}"
                           th:action="@{/progreso/actualizar}" method="post" class="progress-form">

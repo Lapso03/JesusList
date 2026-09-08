@@ -10,6 +10,8 @@ puntos(nivel) = 364.28 * e^(-0.04 * posición)
 La puntuación de cada usuario es la suma de puntos de los niveles que tiene al 100%
 (en Platformer, completado = 100%, no completado = 0%).
 
+Desplegada en https://jesuslist.onrender.com
+
 ## Stack
 
 Spring Boot 3.3.4 + Java 17 + Thymeleaf + Spring Data JPA + H2 (por defecto) / PostgreSQL.
