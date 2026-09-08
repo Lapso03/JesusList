@@ -11,6 +11,10 @@
 
 <main class="layout">
     <section class="levels">
+        <div class="level-search">
+            <input type="text" id="level-search-input" placeholder="🔎 Buscar nivel por nombre..." autocomplete="off">
+            <span id="level-search-count" class="muted"></span>
+        </div>
         <table>
             <thead>
             <tr>
@@ -21,8 +25,8 @@
                 <th th:each="u : ${users}" th:text="${u.username}"></th>
             </tr>
             </thead>
-            <tbody>
-            <tr th:each="row : ${rows}">
+            <tbody id="levels-table-body">
+            <tr th:each="row : ${rows}" th:attr="data-name=${#strings.toLowerCase(row.level.name)}">
                 <td th:text="${row.level.position}"></td>
                 <td>
                     <a th:href="@{/niveles/{id}(id=${row.level.id})}" class="level-link" th:text="${row.level.name}"></a>
@@ -107,6 +111,27 @@
         </ol>
     </aside>
 </main>
+
+<script>
+    (function () {
+        const input = document.getElementById('level-search-input');
+        const rows = [...document.querySelectorAll('#levels-table-body tr')];
+        const counter = document.getElementById('level-search-count');
+
+        input.addEventListener('input', () => {
+            const query = input.value.trim().toLowerCase();
+            let visible = 0;
+
+            rows.forEach(row => {
+                const matches = !query || row.dataset.name.includes(query);
+                row.style.display = matches ? '' : 'none';
+                if (matches) visible++;
+            });
+
+            counter.textContent = query ? `${visible} de ${rows.length}` : '';
+        });
+    })();
+</script>
 
 </body>
 </html>

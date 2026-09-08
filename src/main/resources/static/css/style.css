@@ -502,3 +502,21 @@ input.pct-100, input.pct-90, input.pct-50 { border-color: currentColor; }
 .recommend-box a:hover { color: var(--accent); }
 
 .external-note { font-size: 11px; margin: 6px 0 0; }
+
+.level-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.level-search input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+}
+.level-search input:focus { outline: 1px solid var(--accent); }
+#level-search-count { font-size: 12px; white-space: nowrap; }

@@ -71,9 +71,10 @@ public class RecommendationService {
     }
 
     /**
-     * Solo tiene sentido para listas con dificultad (gdId + staticDifficulty/gddlDifficulty).
-     * Antes estaba fijado a Classic; ahora funciona para cualquier lista con hasDifficulty=true.
-     * El caller (LevelsController) debe comprobar gameList.isHasDifficulty() antes de llamar a esto.
+     * Antes estaba fijado a Classic; ahora funciona para cualquier lista, filtrando los resultados
+     * de GDBrowser para que coincidan con el modo de la lista actual: si la lista usa dificultad
+     * (como Classic) solo se recomiendan niveles en modo Classic; si no (como Platformer) solo se
+     * recomiendan niveles en modo Platformer.
      */
     public List<GdLevelSuggestion> recommendExternalDemons(AppUser user, GameList gameList) {
         List<Level> levels = levelRepository.findByGameListOrderByPositionAsc(gameList);
@@ -96,20 +97,27 @@ public class RecommendationService {
             return List.of();
         }
 
-        double avgPosition = completedLevels.stream().mapToInt(Level::getPosition).average().orElse(0);
+        int demonFilter;
+        if (gameList.isHasDifficulty()) {
+            double avgPosition = completedLevels.stream().mapToInt(Level::getPosition).average().orElse(0);
+            Level closest = completedLevels.stream()
+                    .min(Comparator.comparingDouble(l -> Math.abs(l.getPosition() - avgPosition)))
+                    .orElseThrow();
+            demonFilter = demonFilterFor(closest.getGddlDifficulty() != null ? closest.getGddlDifficulty() : closest.getStaticDifficulty());
+        } else {
+            // Las listas sin dificultad (como Platformer) no tienen forma de estimar el nivel del
+            // usuario, asi que recomendamos del rango medio-alto (Insane) para no quedarnos cortos.
+            demonFilter = 4;
+        }
 
-        Level closest = completedLevels.stream()
-                .min(Comparator.comparingDouble(l -> Math.abs(l.getPosition() - avgPosition)))
-                .orElseThrow();
-
-        int demonFilter = demonFilterFor(closest.getGddlDifficulty() != null ? closest.getGddlDifficulty() : closest.getStaticDifficulty());
+        boolean wantPlatformer = !gameList.isHasDifficulty();
 
         Set<Long> knownGdIds = levels.stream()
                 .map(Level::getGdId)
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        return gdBrowserClient.searchDemons(demonFilter, 10).stream()
+        return gdBrowserClient.searchDemons(demonFilter, wantPlatformer, 10).stream()
                 .filter(s -> !knownGdIds.contains(s.id()))
                 .limit(MAX_RECOMMENDATIONS)
                 .toList();
