@@ -25,7 +25,7 @@ public class PagesController {
             new LinkItem("Pointercrate Demonlist", "Lista clásica de demons", "https://pointercrate.com", "👑"),
             new LinkItem("Pemonlist","Lista de demons plataforma","https://pemonlist.com/","🥀"),
             new LinkItem("Tierlist Jesus List", "Tierlist de los niveles de la Jesus List", "https://tiermaker.com/create/jesusgd-tierlist-18605306", "♿"),
-            new LinkItem("Higher or Lower AREDL","Juego Higher or Lower para niveles de la AREDL","https://rapidjonte.github.io/AREDL-Higher-or-Lower/","🔝"),
+            new LinkItem("Higher or Lower AREDL","Juego Higher or Lower para niveles de la AREDL","https://aredl.net/games/higher-lower","🔝"),
             new LinkItem("GDBrowser", "Perfiles y niveles de GD", "https://gdbrowser.com", "🔍")
     );
 

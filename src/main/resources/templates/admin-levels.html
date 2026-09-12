@@ -80,9 +80,9 @@
         ID de GD
         <input type="number" name="gdId" placeholder="opcional">
       </label>
-      <label class="grow difficulty-field">
+      <label class="grow">
         Dificultad
-        <input type="text" name="staticDifficulty" placeholder="Extreme Demon (Tier 25)">
+        <input type="text" name="staticDifficulty" placeholder="Extreme Demon (Tier 25) o el texto que quieras">
       </label>
       <label class="grow">
         Vídeo (YouTube, opcional)
@@ -91,8 +91,8 @@
 
       <button type="submit">Añadir</button>
     </form>
-    <p class="muted difficulty-field">
-      Si pones el ID de GD, en cuanto guardes se intentará rellenar sola la dificultad/posición AREDL-GDDL.
+    <p class="muted sync-hint">
+      Si pones el ID de GD en una lista que sincroniza (como Classic), en cuanto guardes se intentará rellenar sola la posición AREDL / dificultad GDDL.
     </p>
   </section>
 
@@ -101,7 +101,7 @@
     <tr>
       <th>#</th>
       <th>Nombre</th>
-      <th class="difficulty-col">Dificultad</th>
+      <th>Dificultad</th>
       <th>ID de GD</th>
       <th>Acciones</th>
     </tr>
@@ -124,7 +124,6 @@
     const addForm = document.getElementById('add-form');
     const tabLinks = document.querySelectorAll('.tab-link');
     const difficultyFields = document.querySelectorAll('.difficulty-field');
-    const difficultyCol = document.querySelector('.difficulty-col');
     const syncAllBtn = document.getElementById('sync-all-btn');
 
     function apiUrl(path) {
@@ -142,7 +141,6 @@
       editingId = null;
       tabLinks.forEach(a => a.classList.toggle('active', a.dataset.tipo === tipo));
       difficultyFields.forEach(el => el.style.display = hasDifficulty ? '' : 'none');
-      if (difficultyCol) difficultyCol.style.display = hasDifficulty ? '' : 'none';
       load();
     }
 
@@ -179,7 +177,7 @@
                         <input type="text" value="${escapeAttr(level.name)}" class="name-input">
                         <input type="text" value="${escapeAttr(level.showcaseVideoUrl || '')}" class="video-input" placeholder="URL de YouTube">
                     </td>
-                    ${hasDifficulty ? `<td><input type="text" value="${escapeAttr(level.gddlDifficulty || level.staticDifficulty || '')}" class="diff-input"></td>` : ''}
+                    <td><input type="text" value="${escapeAttr(level.gddlDifficulty || level.staticDifficulty || '')}" class="diff-input"></td>
                     <td><input type="number" value="${level.gdId ?? ''}" class="gdid-input"></td>
                     <td class="admin-actions">
                         <button class="save-btn" title="Guardar">💾</button>
@@ -192,7 +190,7 @@
           tr.innerHTML = `
                     <td>${level.position}</td>
                     <td>${escapeHtml(level.name)}</td>
-                    ${hasDifficulty ? `<td>${escapeHtml(level.gddlDifficulty || level.staticDifficulty || '—')}</td>` : ''}
+                    <td>${escapeHtml(level.gddlDifficulty || level.staticDifficulty || '—')}</td>
                     <td>${level.gdId ?? '—'}</td>
                     <td class="admin-actions"></td>
                 `;

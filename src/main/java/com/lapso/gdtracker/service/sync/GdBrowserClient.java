@@ -22,28 +22,46 @@ public class GdBrowserClient {
     public List<GdLevelSuggestion> searchDemons(int demonFilter, boolean wantPlatformer, int count) {
         List<GdLevelSuggestion> results = new ArrayList<>();
         try {
-            // GDBrowser no deja filtrar Classic/Platformer directamente en la busqueda, asi que
-            // pedimos de sobra y filtramos nosotros por el campo "platformer" de cada nivel.
-            int fetchCount = Math.max(count * 6, 30);
+            // El endpoint de busqueda no siempre trae el campo "platformer" correcto (es un campo
+            // ligero pensado para listados), asi que solo lo usamos para obtener candidatos por
+            // popularidad, y luego confirmamos el modo real de cada uno con /api/level/{id},
+            // que si es fiable. Nos detenemos en cuanto tenemos "count" confirmados.
+            int fetchCount = Math.max(count * 8, 40);
 
-            JsonNode body = restClient.get()
+            JsonNode searchBody = restClient.get()
                     .uri("/search/*?diff=-2&demonFilter={df}&type=mostliked&count={count}&page=1", demonFilter, fetchCount)
                     .retrieve()
                     .body(JsonNode.class);
 
-            if (body == null || !body.isArray()) return results;
+            if (searchBody == null || !searchBody.isArray()) return results;
 
-            for (JsonNode node : body) {
-                if (results.size() >= count) break;
-                if (!node.hasNonNull("id") || !node.hasNonNull("name")) continue;
+            int checked = 0;
+            int maxChecks = fetchCount; // limite de seguridad para no martillear la API indefinidamente
 
-                boolean isPlatformer = node.hasNonNull("platformer") && node.get("platformer").asBoolean();
+            for (JsonNode candidate : searchBody) {
+                if (results.size() >= count || checked >= maxChecks) break;
+                if (!candidate.hasNonNull("id") || !candidate.hasNonNull("name")) continue;
+
+                checked++;
+                Long id = candidate.get("id").asLong();
+
+                JsonNode detail;
+                try {
+                    detail = restClient.get()
+                            .uri("/level/{id}", id)
+                            .retrieve()
+                            .body(JsonNode.class);
+                } catch (Exception e) {
+                    continue; // este nivel en concreto no se pudo verificar, pasamos al siguiente
+                }
+                if (detail == null) continue;
+
+                boolean isPlatformer = detail.hasNonNull("platformer") && detail.get("platformer").asBoolean();
                 if (isPlatformer != wantPlatformer) continue;
 
-                Long id = node.get("id").asLong();
-                String name = node.get("name").asText();
-                String difficulty = node.hasNonNull("difficulty") ? node.get("difficulty").asText() : null;
-                Integer stars = node.hasNonNull("stars") ? node.get("stars").asInt() : null;
+                String name = detail.hasNonNull("name") ? detail.get("name").asText() : candidate.get("name").asText();
+                String difficulty = detail.hasNonNull("difficulty") ? detail.get("difficulty").asText() : null;
+                Integer stars = detail.hasNonNull("stars") ? detail.get("stars").asInt() : null;
                 results.add(new GdLevelSuggestion(id, name, difficulty, stars));
             }
         } catch (Exception e) {
