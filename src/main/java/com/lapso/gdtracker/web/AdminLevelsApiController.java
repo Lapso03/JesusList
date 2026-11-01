@@ -59,7 +59,7 @@ public class AdminLevelsApiController {
 
         GameList gameList = resolveList(req.tipo());
         levelAdminService.createLevel(gameList, req.position(), req.name(), req.gdId(), req.staticDifficulty(),
-                req.showcaseVideoUrl());
+                req.showcaseVideoUrl(), SessionUtil.currentUser(session));
         return ResponseEntity.ok(listDto(gameList));
     }
 
@@ -69,7 +69,7 @@ public class AdminLevelsApiController {
 
         Level level = levelRepository.findById(id).orElseThrow();
         levelAdminService.updateDetails(level, req.name(), req.gdId(), req.staticDifficulty(), req.showcaseVideoUrl());
-        levelAdminService.moveTo(level, req.position());
+        levelAdminService.moveTo(level, req.position(), SessionUtil.currentUser(session));
         return ResponseEntity.ok(listDto(resolveList(req.tipo())));
     }
 
@@ -95,7 +95,7 @@ public class AdminLevelsApiController {
         if (!SessionUtil.isEditor(session)) return forbidden();
 
         Level level = levelRepository.findById(id).orElseThrow();
-        levelAdminService.deleteLevel(level);
+        levelAdminService.deleteLevel(level, SessionUtil.currentUser(session));
         return ResponseEntity.ok(listDto(resolveList(tipo)));
     }
 }

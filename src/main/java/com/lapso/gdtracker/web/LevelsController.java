@@ -125,6 +125,11 @@ public class LevelsController {
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("gameList", gameList);
         model.addAttribute("listType", gameList.getSlug());
+        model.addAttribute("firstLegacyLevelId", levels.stream()
+                .filter(Level::isLegacy)
+                .map(Level::getId)
+                .findFirst()
+                .orElse(null));
         model.addAttribute("leaderboard", scoreService.leaderboardFor(gameList));
         model.addAttribute("globalLeaderboard", scoreService.globalLeaderboard());
 

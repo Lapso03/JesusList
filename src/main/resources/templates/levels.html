@@ -11,9 +11,12 @@
 
 <main class="layout">
     <section class="levels">
-        <div class="level-search">
-            <input type="text" id="level-search-input" placeholder="🔎 Buscar nivel por nombre..." autocomplete="off">
-            <span id="level-search-count" class="muted"></span>
+        <div class="list-toolbar">
+            <div class="level-search">
+                <input type="text" id="level-search-input" placeholder="🔎 Buscar nivel por nombre..." autocomplete="off">
+                <span id="level-search-count" class="muted"></span>
+            </div>
+            <a th:href="@{'/listas/' + ${gameList.slug} + '/log'}" class="guest-link">📜 Historial</a>
         </div>
         <table>
             <thead>
@@ -26,47 +29,55 @@
             </tr>
             </thead>
             <tbody id="levels-table-body">
-            <tr th:each="row : ${rows}" th:attr="data-name=${#strings.toLowerCase(row.level.name)}">
-                <td th:text="${row.level.position}"></td>
-                <td>
-                    <a th:href="@{/niveles/{id}(id=${row.level.id})}" class="level-link" th:text="${row.level.name}"></a>
-                    <span class="sync-tag" th:if="${gameList.hasDifficulty and row.level.aredlPosition != null}"
-                          th:text="'AREDL #' + ${row.level.aredlPosition}"></span>
-                </td>
-                <td>
-                    <span th:text="${row.level.gddlDifficulty ?: row.level.staticDifficulty}"></span>
-                </td>
-                <td th:text="${#numbers.formatDecimal(row.points, 1, 1)}"></td>
+            <th:block th:each="row, rowStat : ${rows}">
+                <tr class="section-row" th:if="${rowStat.first}">
+                    <td th:colspan="${4 + #lists.size(users)}">Main List <small th:text="'posiciones 1–' + ${mainListSize}"></small></td>
+                </tr>
+                <tr class="section-row" th:if="${row.level.id == firstLegacyLevelId}">
+                    <td th:colspan="${4 + #lists.size(users)}">Legacy List <small th:text="'a partir de la posición ' + ${mainListSize + 1}"></small></td>
+                </tr>
+                <tr th:attr="data-name=${#strings.toLowerCase(row.level.name)}">
+                    <td th:text="${row.level.position}"></td>
+                    <td>
+                        <a th:href="@{/niveles/{id}(id=${row.level.id})}" class="level-link" th:text="${row.level.name}"></a>
+                        <span class="sync-tag" th:if="${gameList.hasDifficulty and row.level.aredlPosition != null}"
+                              th:text="'AREDL #' + ${row.level.aredlPosition}"></span>
+                    </td>
+                    <td>
+                        <span th:text="${row.level.gddlDifficulty ?: row.level.staticDifficulty}"></span>
+                    </td>
+                    <td th:text="${#numbers.formatDecimal(row.points, 1, 1)}"></td>
 
-                <td th:each="u : ${users}"
-                    th:with="pct=${row.progressByUser.get(u.username) ?: 0},
+                    <td th:each="u : ${users}"
+                        th:with="pct=${row.progressByUser.get(u.username) ?: 0},
                              pctClass=${pct >= 100} ? 'pct-100' : (${pct >= 90} ? 'pct-90' : (${pct >= 50} ? 'pct-50' : ''))">
-                    <form th:if="${u.username == currentUser and gameList.hasDifficulty}"
-                          th:action="@{/progreso/actualizar}" method="post" class="progress-form">
-                        <input type="hidden" name="levelId" th:value="${row.level.id}">
-                        <input type="hidden" name="volver" th:value="${listType}">
-                        <input type="number" name="percentage" min="0" max="100"
-                               th:value="${pct}" th:class="${pctClass}"
-                               oninput="this.className = this.value >= 100 ? 'pct-100' : (this.value >= 90 ? 'pct-90' : (this.value >= 50 ? 'pct-50' : ''))"
-                               onchange="this.form.submit()">
-                        <span>%</span>
-                    </form>
+                        <form th:if="${u.username == currentUser and gameList.hasDifficulty}"
+                              th:action="@{/progreso/actualizar}" method="post" class="progress-form">
+                            <input type="hidden" name="levelId" th:value="${row.level.id}">
+                            <input type="hidden" name="volver" th:value="${listType}">
+                            <input type="number" name="percentage" min="0" max="100"
+                                   th:value="${pct}" th:class="${pctClass}"
+                                   oninput="this.className = this.value >= 100 ? 'pct-100' : (this.value >= 90 ? 'pct-90' : (this.value >= 50 ? 'pct-50' : ''))"
+                                   onchange="this.form.submit()">
+                            <span>%</span>
+                        </form>
 
-                    <form th:if="${u.username == currentUser and !gameList.hasDifficulty}"
-                          th:action="@{/progreso/actualizar}" method="post" class="progress-form">
-                        <input type="hidden" name="levelId" th:value="${row.level.id}">
-                        <input type="hidden" name="volver" th:value="${listType}">
-                        <input type="hidden" name="percentage"
-                               th:value="${pct >= 100} ? 0 : 100">
-                        <button type="submit" th:class="${pctClass}"
-                                th:text="${pct >= 100} ? '✅' : '⬜'"></button>
-                    </form>
+                        <form th:if="${u.username == currentUser and !gameList.hasDifficulty}"
+                              th:action="@{/progreso/actualizar}" method="post" class="progress-form">
+                            <input type="hidden" name="levelId" th:value="${row.level.id}">
+                            <input type="hidden" name="volver" th:value="${listType}">
+                            <input type="hidden" name="percentage"
+                                   th:value="${pct >= 100} ? 0 : 100">
+                            <button type="submit" th:class="${pctClass}"
+                                    th:text="${pct >= 100} ? '✅' : '⬜'"></button>
+                        </form>
 
-                    <span th:unless="${u.username == currentUser}"
-                          th:class="'pct-badge ' + ${pctClass}"
-                          th:text="${pct} + '%'"></span>
-                </td>
-            </tr>
+                        <span th:unless="${u.username == currentUser}"
+                              th:class="'pct-badge ' + ${pctClass}"
+                              th:text="${pct} + '%'"></span>
+                    </td>
+                </tr>
+            </th:block>
             </tbody>
         </table>
     </section>
@@ -115,7 +126,8 @@
 <script>
     (function () {
         const input = document.getElementById('level-search-input');
-        const rows = [...document.querySelectorAll('#levels-table-body tr')];
+        const rows = [...document.querySelectorAll('#levels-table-body tr[data-name]')];
+        const sectionRows = [...document.querySelectorAll('#levels-table-body tr.section-row')];
         const counter = document.getElementById('level-search-count');
 
         input.addEventListener('input', () => {
@@ -127,6 +139,9 @@
                 row.style.display = matches ? '' : 'none';
                 if (matches) visible++;
             });
+
+            // Mientras se busca, los rótulos Main/Legacy estorban: se ocultan y vuelven al borrar la búsqueda.
+            sectionRows.forEach(row => row.style.display = query ? 'none' : '');
 
             counter.textContent = query ? `${visible} de ${rows.length}` : '';
         });

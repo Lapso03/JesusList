@@ -1,6 +1,7 @@
 package com.lapso.gdtracker.web;
 
 import com.lapso.gdtracker.model.GameList;
+import com.lapso.gdtracker.model.Level;
 import com.lapso.gdtracker.repository.GameListRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -25,6 +26,12 @@ public class GlobalModelAttributes {
     @ModelAttribute("isEditor")
     public boolean isEditor(HttpSession session) {
         return SessionUtil.isEditor(session);
+    }
+
+    /** Tamaño de la Main List (100): las plantillas lo usan para rotular Main / Legacy. */
+    @ModelAttribute("mainListSize")
+    public int mainListSize() {
+        return Level.MAIN_LIST_SIZE;
     }
 
     /** Disponible en todas las plantillas para pintar la barra de navegación dinámicamente. */
