@@ -91,6 +91,9 @@
 
       <button type="submit">Añadir</button>
     </form>
+    <p class="muted">
+      <span th:text="'Main List: posiciones 1–' + ${mainListSize} + ' · Legacy List: desde la ' + ${mainListSize + 1} + '. Si añades un nivel dentro de la Main List y ya está completa, el nivel #' + ${mainListSize} + ' pasa solo a la Legacy List. Todos los movimientos quedan en el historial de la lista.'"></span>
+    </p>
     <p class="muted sync-hint">
       Si pones el ID de GD en una lista que sincroniza (como Classic), en cuanto guardes se intentará rellenar sola la posición AREDL / dificultad GDDL.
     </p>
@@ -115,6 +118,7 @@
 <script th:inline="javascript">
   (function () {
     const initialType = /*[[${listType}]]*/ 'classic';
+    const mainListSize = /*[[${mainListSize}]]*/ 100;
     let currentType = initialType;
     let hasDifficulty = true;
     let levels = [];
@@ -167,7 +171,19 @@
         return;
       }
 
+      let mainHeaderShown = false;
+      let legacyHeaderShown = false;
+
       for (const level of levels) {
+        if (!mainHeaderShown && level.position <= mainListSize) {
+          tbody.appendChild(sectionRow('Main List', 'posiciones 1–' + mainListSize));
+          mainHeaderShown = true;
+        }
+        if (!legacyHeaderShown && level.position > mainListSize) {
+          tbody.appendChild(sectionRow('Legacy List', 'a partir de la posición ' + (mainListSize + 1)));
+          legacyHeaderShown = true;
+        }
+
         const tr = document.createElement('tr');
 
         if (editingId === level.id) {
@@ -220,6 +236,13 @@
 
         tbody.appendChild(tr);
       }
+    }
+
+    function sectionRow(title, detail) {
+      const tr = document.createElement('tr');
+      tr.className = 'section-row';
+      tr.innerHTML = `<td colspan="5">${title} <small>${detail}</small></td>`;
+      return tr;
     }
 
     function escapeHtml(str) {

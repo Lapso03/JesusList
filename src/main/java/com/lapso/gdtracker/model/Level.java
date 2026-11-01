@@ -7,6 +7,12 @@ import java.time.LocalDateTime;
 @Table(name = "levels", uniqueConstraints = @UniqueConstraint(columnNames = {"game_list_id", "position"}))
 public class Level {
 
+    /**
+     * Tamaño de la Main List: las posiciones 1..MAIN_LIST_SIZE son Main List y todo lo que va
+     * despues (101, 102...) es Legacy List. Mismo formato que la Demonlist de Pointercrate.
+     */
+    public static final int MAIN_LIST_SIZE = 100;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -60,6 +66,11 @@ public class Level {
         this.gdId = gdId;
         this.staticDifficulty = staticDifficulty;
         this.showcaseVideoUrl = showcaseVideoUrl;
+    }
+
+    /** true si el nivel esta en la Legacy List (posicion mayor que MAIN_LIST_SIZE). */
+    public boolean isLegacy() {
+        return position > MAIN_LIST_SIZE;
     }
 
     /** Puntos que vale el nivel, siguiendo la formula original de la Demonlist: 364.28 * e^(-0.04 * posicion). */

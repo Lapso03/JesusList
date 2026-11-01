@@ -2,6 +2,7 @@ package com.lapso.gdtracker.service;
 
 import com.lapso.gdtracker.model.GameList;
 import com.lapso.gdtracker.repository.GameListRepository;
+import com.lapso.gdtracker.repository.LevelLogRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,10 +14,13 @@ public class GameListAdminService {
 
     private final GameListRepository gameListRepository;
     private final LevelAdminService levelAdminService;
+    private final LevelLogRepository levelLogRepository;
 
-    public GameListAdminService(GameListRepository gameListRepository, LevelAdminService levelAdminService) {
+    public GameListAdminService(GameListRepository gameListRepository, LevelAdminService levelAdminService,
+                                LevelLogRepository levelLogRepository) {
         this.gameListRepository = gameListRepository;
         this.levelAdminService = levelAdminService;
+        this.levelLogRepository = levelLogRepository;
     }
 
     @Transactional
@@ -36,9 +40,10 @@ public class GameListAdminService {
         return gameListRepository.save(gameList);
     }
 
-    /** Borra la lista Y todos sus niveles (con su progreso y comentarios). Irreversible. */
+    /** Borra la lista Y todos sus niveles (con su progreso, comentarios e historial). Irreversible. */
     @Transactional
     public void delete(GameList gameList) {
+        levelLogRepository.deleteByGameList(gameList);
         levelAdminService.deleteAllLevelsOf(gameList);
         gameListRepository.delete(gameList);
     }

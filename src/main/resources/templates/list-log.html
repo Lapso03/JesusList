@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Historial · ' + ${gameList.name} + ' · GD Progress Tracker'"></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="log-page">
+    <a th:href="@{'/listas/' + ${gameList.slug}}" class="back-link">← Volver a la lista</a>
+
+    <h1>Historial · <span th:text="${gameList.name}"></span></h1>
+    <p class="muted">
+        Main List: posiciones 1–<span th:text="${mainListSize}"></span> ·
+        Legacy List: a partir de la <span th:text="${mainListSize + 1}"></span>.
+        Los más recientes arriba.
+    </p>
+
+    <p th:if="${#lists.isEmpty(entries)}" class="muted">
+        Todavía no hay movimientos registrados en esta lista. Aparecerán aquí cuando se añada, mueva o elimine un nivel.
+    </p>
+
+    <table th:unless="${#lists.isEmpty(entries)}" class="log-table">
+        <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Cambio</th>
+            <th>Usuario</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="e : ${entries}">
+            <td class="log-date" th:text="${#temporals.format(e.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:switch="${e.type.name()}">
+                <span th:case="'ADDED'">
+                    ➕ <strong th:text="${e.levelName}"></strong> añadido en el
+                    <strong th:text="'#' + ${e.newPosition}"></strong>
+                    <small class="muted" th:text="${e.newPosition > mainListSize} ? '(Legacy List)' : '(Main List)'"></small>
+                </span>
+                <span th:case="'MOVED'">
+                    ↕️ <strong th:text="${e.levelName}"></strong> movido del
+                    <strong th:text="'#' + ${e.oldPosition}"></strong> al
+                    <strong th:text="'#' + ${e.newPosition}"></strong>
+                </span>
+                <span th:case="'REMOVED'">
+                    ➖ <strong th:text="${e.levelName}"></strong> eliminado de la lista
+                    <small class="muted" th:text="'(estaba en el #' + ${e.oldPosition} + ')'"></small>
+                </span>
+                <span th:case="'MOVED_TO_LEGACY'">
+                    📦 <strong th:text="${e.levelName}"></strong> pasa de la Main List
+                    <small class="muted" th:text="'(#' + ${e.oldPosition} + ')'"></small>
+                    a la Legacy List <small class="muted" th:text="'(#' + ${e.newPosition} + ')'"></small>
+                </span>
+                <span th:case="'MOVED_TO_MAIN'">
+                    ⬆️ <strong th:text="${e.levelName}"></strong> vuelve de la Legacy List
+                    <small class="muted" th:text="'(#' + ${e.oldPosition} + ')'"></small>
+                    a la Main List <small class="muted" th:text="'(#' + ${e.newPosition} + ')'"></small>
+                </span>
+            </td>
+            <td class="log-actor" th:text="${e.actor ?: '—'}"></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+
+</body>
+</html>
