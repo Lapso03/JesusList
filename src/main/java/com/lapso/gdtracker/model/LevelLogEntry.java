@@ -3,6 +3,7 @@ package com.lapso.gdtracker.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Una linea del historial de posiciones de una lista. Guarda el nombre del nivel "en foto" (no una
@@ -11,6 +12,12 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "level_log")
 public class LevelLogEntry {
+
+    /**
+     * Las fechas del historial se guardan en hora de España, para que las entradas automaticas
+     * y las que se apuntan a mano (que se escriben en hora local) queden en la misma escala.
+     */
+    public static final ZoneId ZONE = ZoneId.of("Europe/Madrid");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +57,14 @@ public class LevelLogEntry {
         this.oldPosition = oldPosition;
         this.newPosition = newPosition;
         this.actor = actor;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(ZONE);
+    }
+
+    /** Para apuntar a mano un cambio anterior a que existiera el historial, con su fecha real. */
+    public LevelLogEntry(GameList gameList, LevelLogType type, String levelName,
+                         Integer oldPosition, Integer newPosition, String actor, LocalDateTime createdAt) {
+        this(gameList, type, levelName, oldPosition, newPosition, actor);
+        this.createdAt = createdAt;
     }
 
     public Long getId() {

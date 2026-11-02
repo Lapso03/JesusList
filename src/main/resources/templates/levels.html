@@ -11,12 +11,9 @@
 
 <main class="layout">
     <section class="levels">
-        <div class="list-toolbar">
-            <div class="level-search">
-                <input type="text" id="level-search-input" placeholder="🔎 Buscar nivel por nombre..." autocomplete="off">
-                <span id="level-search-count" class="muted"></span>
-            </div>
-            <a th:href="@{'/listas/' + ${gameList.slug} + '/log'}" class="guest-link">📜 Historial</a>
+        <div class="level-search">
+            <input type="text" id="level-search-input" placeholder="🔎 Buscar nivel por nombre..." autocomplete="off">
+            <span id="level-search-count" class="muted"></span>
         </div>
         <table>
             <thead>
@@ -46,7 +43,7 @@
                     <td>
                         <span th:text="${row.level.gddlDifficulty ?: row.level.staticDifficulty}"></span>
                     </td>
-                    <td th:text="${#numbers.formatDecimal(row.points, 1, 1)}"></td>
+                    <td th:text="${row.level.legacy} ? '—' : ${#numbers.formatDecimal(row.points, 1, 1)}"></td>
 
                     <td th:each="u : ${users}"
                         th:with="pct=${row.progressByUser.get(u.username) ?: 0},
@@ -120,6 +117,22 @@
                 <small th:text="${entry.levelsCompleted} + ' niveles'"></small>
             </li>
         </ol>
+
+        <div class="recent-log">
+            <h2>Últimos movimientos</h2>
+            <p th:if="${#lists.isEmpty(recentLog)}" class="muted">Todavía no hay movimientos registrados.</p>
+            <ul th:unless="${#lists.isEmpty(recentLog)}">
+                <li th:each="e : ${recentLog}" th:switch="${e.type.name()}">
+                    <span th:case="'ADDED'" th:text="'➕ ' + ${e.levelName} + ' añadido en el #' + ${e.newPosition}"></span>
+                    <span th:case="'MOVED'" th:text="'↕️ ' + ${e.levelName} + ': #' + ${e.oldPosition} + ' → #' + ${e.newPosition}"></span>
+                    <span th:case="'REMOVED'" th:text="'➖ ' + ${e.levelName} + ' eliminado (#' + ${e.oldPosition} + ')'"></span>
+                    <span th:case="'MOVED_TO_LEGACY'" th:text="'📦 ' + ${e.levelName} + ' pasa a la Legacy'"></span>
+                    <span th:case="'MOVED_TO_MAIN'" th:text="'⬆️ ' + ${e.levelName} + ' vuelve a la Main'"></span>
+                    <small th:text="${#temporals.format(e.createdAt, 'dd/MM/yyyy')} + (${e.actor != null} ? ' · ' + ${e.actor} : '')"></small>
+                </li>
+            </ul>
+            <a th:href="@{'/listas/' + ${gameList.slug} + '/log'}" class="guest-link">📜 Ver historial completo</a>
+        </div>
     </aside>
 </main>
 

@@ -1,6 +1,7 @@
 package com.lapso.gdtracker.web;
 
 import com.lapso.gdtracker.model.GameList;
+import com.lapso.gdtracker.repository.AppUserRepository;
 import com.lapso.gdtracker.repository.GameListRepository;
 import com.lapso.gdtracker.repository.LevelLogRepository;
 import org.springframework.http.HttpStatus;
@@ -16,10 +17,13 @@ public class LevelLogController {
 
     private final GameListRepository gameListRepository;
     private final LevelLogRepository levelLogRepository;
+    private final AppUserRepository userRepository;
 
-    public LevelLogController(GameListRepository gameListRepository, LevelLogRepository levelLogRepository) {
+    public LevelLogController(GameListRepository gameListRepository, LevelLogRepository levelLogRepository,
+                              AppUserRepository userRepository) {
         this.gameListRepository = gameListRepository;
         this.levelLogRepository = levelLogRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/listas/{slug}/log")
@@ -28,7 +32,9 @@ public class LevelLogController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lista no encontrada"));
 
         model.addAttribute("gameList", gameList);
-        model.addAttribute("entries", levelLogRepository.findByGameListOrderByIdDesc(gameList));
+        model.addAttribute("entries", levelLogRepository.findByGameListOrderByCreatedAtDescIdDesc(gameList));
+        // Para el desplegable "usuario" del formulario de entradas manuales (solo lo ven los editores).
+        model.addAttribute("users", userRepository.findAll());
         return "list-log";
     }
 }

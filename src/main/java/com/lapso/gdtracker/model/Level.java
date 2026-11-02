@@ -73,8 +73,14 @@ public class Level {
         return position > MAIN_LIST_SIZE;
     }
 
-    /** Puntos que vale el nivel, siguiendo la formula original de la Demonlist: 364.28 * e^(-0.04 * posicion). */
+    /**
+     * Puntos que vale el nivel, siguiendo la formula original de la Demonlist: 364.28 * e^(-0.04 * posicion).
+     * Los niveles de la Legacy List no dan puntos (como en Pointercrate): solo puntua la Main List.
+     */
     public double points() {
+        if (isLegacy()) {
+            return 0;
+        }
         return 364.28 * Math.exp(-0.04 * position);
     }
 

@@ -6,6 +6,7 @@ import com.lapso.gdtracker.model.Level;
 import com.lapso.gdtracker.model.Progress;
 import com.lapso.gdtracker.repository.AppUserRepository;
 import com.lapso.gdtracker.repository.GameListRepository;
+import com.lapso.gdtracker.repository.LevelLogRepository;
 import com.lapso.gdtracker.repository.LevelRepository;
 import com.lapso.gdtracker.repository.ProgressRepository;
 import com.lapso.gdtracker.service.RecommendationService;
@@ -33,11 +34,12 @@ public class LevelsController {
     private final ScoreService scoreService;
     private final PasswordEncoder passwordEncoder;
     private final RecommendationService recommendationService;
+    private final LevelLogRepository levelLogRepository;
 
     public LevelsController(LevelRepository levelRepository, GameListRepository gameListRepository,
                             AppUserRepository userRepository, ProgressRepository progressRepository,
                             ScoreService scoreService, PasswordEncoder passwordEncoder,
-                            RecommendationService recommendationService) {
+                            RecommendationService recommendationService, LevelLogRepository levelLogRepository) {
         this.levelRepository = levelRepository;
         this.gameListRepository = gameListRepository;
         this.userRepository = userRepository;
@@ -45,6 +47,7 @@ public class LevelsController {
         this.scoreService = scoreService;
         this.passwordEncoder = passwordEncoder;
         this.recommendationService = recommendationService;
+        this.levelLogRepository = levelLogRepository;
     }
 
     @GetMapping("/login")
@@ -125,6 +128,7 @@ public class LevelsController {
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("gameList", gameList);
         model.addAttribute("listType", gameList.getSlug());
+        model.addAttribute("recentLog", levelLogRepository.findTop10ByGameListOrderByCreatedAtDescIdDesc(gameList));
         model.addAttribute("firstLegacyLevelId", levels.stream()
                 .filter(Level::isLegacy)
                 .map(Level::getId)
