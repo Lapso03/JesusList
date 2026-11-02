@@ -527,3 +527,63 @@ input.pct-100, input.pct-90, input.pct-50 { border-color: currentColor; }
 .level-search input:focus { outline: none; }
 .level-search:focus-within { border-color: var(--accent); }
 #level-search-count { font-size: 12px; color: var(--muted); white-space: nowrap; padding-right: 8px; }
+/* --- Main List / Legacy List --- */
+.section-row td {
+    background: var(--bg);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+}
+.section-row small {
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-left: 8px;
+}
+
+/* --- Historial de una lista --- */
+.log-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+.log-page h1 { margin: 12px 0 4px; }
+.log-page .muted { color: var(--muted); font-size: 13px; }
+.log-table { margin-top: 16px; }
+.log-date { color: var(--muted); white-space: nowrap; font-size: 13px; }
+.log-actor { color: var(--green); font-weight: 600; white-space: nowrap; }
+
+/* --- Últimos movimientos (columna derecha) --- */
+.recent-log { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.recent-log h2 { font-size: 15px; margin: 0 0 8px; }
+.recent-log .muted { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+.leaderboard .recent-log ul { list-style: none; padding: 0; margin: 0 0 12px; }
+.leaderboard .recent-log li {
+    display: block;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+.leaderboard .recent-log li:last-child { border-bottom: none; }
+.recent-log small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.recent-log .guest-link { display: block; text-align: center; }
+
+/* --- Formulario para apuntar entradas antiguas del historial --- */
+.log-add { margin-top: 16px; }
+.log-add summary { cursor: pointer; font-weight: 600; }
+.log-add .muted { margin: 10px 0 14px; }
+.admin-form select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 7px;
+    font-size: 13px;
+}
+.admin-form input, .admin-form select { color-scheme: dark; }
+.log-del { background: none; border: none; cursor: pointer; font-size: 16px; }
+.log-del:hover { filter: brightness(1.3); }
